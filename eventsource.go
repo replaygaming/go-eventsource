@@ -19,8 +19,10 @@ func init() {
 }
 
 func main() {
+
 	server := &eventsource.Eventsource{
 		ChanSub: eventsource.QueryStringChannels{Name: "channels"},
+		Stats:   NewStats(),
 	}
 	server.Start()
 
