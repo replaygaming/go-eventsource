@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/luizbranco/eventsource"
 	"github.com/peterbourgon/g2s"
 )
@@ -23,15 +25,17 @@ func NewStats(addr string, prefix string) (*Stats, error) {
 }
 
 func (s *Stats) ClientsCount(count int) {
-	s.statsd.Gauge(1, s.prefix+"connections", string(count))
+	n := strconv.Itoa(count)
+	s.statsd.Gauge(1, s.prefix+"connections", n)
 }
 
 func (s *Stats) EventSent(stats eventsource.EventStats) {
 	duration := stats.End.Sub(stats.Start)
-	s.statsd.Timing(sampleRate, s.prefix+"publish.timing", duration)
+	s.statsd.Timing(sampleRate, s.prefix+"publish.connection_write.timing", duration)
 }
 
 func (s *Stats) EventEnd(stats eventsource.EventStats) {
 	duration := stats.End.Sub(stats.Start)
-	s.statsd.Timing(sampleRate, s.prefix+"publish.connection_write.timing", duration)
+	s.statsd.Counter(1, s.prefix+"publish.count", 1)
+	s.statsd.Timing(sampleRate, s.prefix+"publish.timing", duration)
 }
