@@ -19,7 +19,11 @@ func init() {
 }
 
 func main() {
-	server := eventsource.NewServer()
+	server := &eventsource.Eventsource{
+		ChanSub: eventsource.QueryStringChannels{Name: "channels"},
+	}
+	server.Start()
+
 	c := consumer{}
 	messages, err := c.subscribe(*uri)
 	if err != nil {
