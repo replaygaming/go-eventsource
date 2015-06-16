@@ -13,7 +13,7 @@ type Stats struct {
 }
 
 func NewStats(addr string, prefix string) (*Stats, error) {
-	stats := &Stats{prefix: prefix}
+	stats := &Stats{prefix: prefix + "."}
 	statsd, err := g2s.Dial("udp", addr)
 	if err != nil {
 		return stats, err
