@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	port     = flag.String("port", "3012", "Eventsource port")
+	port     = flag.String("port", "3001", "Eventsource port")
 	uri      = flag.String("uri", "amqp://guest:guest@localhost:5672/eventsource", "AMQP URI")
 	compress = flag.Bool("compression", false, "Enable zlib compression of data")
 )
