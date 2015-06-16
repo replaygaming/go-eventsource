@@ -21,10 +21,14 @@ func init() {
 }
 
 func main() {
-
 	server := &eventsource.Eventsource{
 		ChanSub: eventsource.QueryStringChannels{Name: "channels"},
-		Stats:   NewStats(*statsdUrl, *prefix),
+	}
+	stats, err := NewStats(*statsdUrl, *prefix)
+	if err == nil {
+		server.Stats = stats
+	} else {
+		log.Printf("[ERROR] %s", err)
 	}
 	server.Start()
 
