@@ -11,11 +11,10 @@ type Stats struct {
 	graphite *statsd.StatsdBuffer
 }
 
-func NewStats() *Stats {
+func NewStats(addr string, prefix string) *Stats {
 	stats := &Stats{}
-	prefix := "app.es_go"
 	interval := time.Second * 2 // aggregate stats and flush every 2 seconds
-	statsdclient := statsd.NewStatsdClient("localhost:8125", prefix)
+	statsdclient := statsd.NewStatsdClient(addr, prefix)
 	stats.graphite = statsd.NewStatsdBuffer(interval, statsdclient)
 	stats.graphite.CreateSocket()
 	return stats

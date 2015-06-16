@@ -9,9 +9,11 @@ import (
 )
 
 var (
-	port     = flag.String("port", "3001", "Eventsource port")
-	uri      = flag.String("uri", "amqp://guest:guest@localhost:5672/eventsource", "AMQP URI")
-	compress = flag.Bool("compression", false, "Enable zlib compression of data")
+	port      = flag.String("port", "3001", "Eventsource port")
+	amqpUrl   = flag.String("amqp-url", "amqp://guest:guest@localhost:5672/eventsource", "AMQP URL")
+	statsdUrl = flag.String("statsd-url", "localhost:2003", "StatsD URL")
+	prefix    = flag.String("statsd-prefix", "app.es_go", "StatsD Prefix")
+	compress  = flag.Bool("compression", false, "Enable zlib compression of data")
 )
 
 func init() {
@@ -22,12 +24,12 @@ func main() {
 
 	server := &eventsource.Eventsource{
 		ChanSub: eventsource.QueryStringChannels{Name: "channels"},
-		Stats:   NewStats(),
+		Stats:   NewStats(*statsdUrl, *prefix),
 	}
 	server.Start()
 
 	c := consumer{}
-	messages, err := c.subscribe(*uri)
+	messages, err := c.subscribe(*amqpUrl)
 	if err != nil {
 		log.Fatalf("[FATAL] AMQP %s", err)
 	}
@@ -51,8 +53,8 @@ func main() {
 	}()
 
 	http.Handle("/subscribe", server)
-	log.Printf("[INFO] start port=%s amqp=%s compression=%t", *port, *uri,
-		*compress)
+	log.Printf("[INFO] start port=%s amqp-url=%s statsd-url=%s statsd-prefix=%s"+
+		" compression=%t ", *port, *amqpUrl, *statsdUrl, *prefix, *compress)
 	err = http.ListenAndServe(":"+*port, nil)
 	if err != nil {
 		log.Fatalf("[FATAL] Server %s", err)
