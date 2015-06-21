@@ -44,7 +44,7 @@ func main() {
 			if err != nil {
 				log.Printf("[WARN] json conversion failed %s", err)
 			} else {
-				e := eventsource.Event{
+				e := eventsource.DefaultEvent{
 					Message:  data,
 					Channels: channels,
 					Compress: *compress,
