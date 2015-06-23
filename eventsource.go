@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	env       = flag.String("env", "development", "Environment: development or production")
 	port      = flag.String("port", "3001", "Eventsource port")
 	amqpUrl   = flag.String("amqp-url", "amqp://guest:guest@localhost:5672/eventsource", "AMQP URL")
 	statsdUrl = flag.String("statsd-url", "localhost:8125", "StatsD URL")
@@ -22,13 +23,11 @@ func init() {
 
 func main() {
 	server := &eventsource.Eventsource{
-		ChanSub: eventsource.QueryStringChannels{Name: "channels"},
+		ChannelSubscriber: eventsource.QueryStringChannels{Name: "channels"},
 	}
-	stats, err := NewStats(*statsdUrl, *prefix)
-	if err == nil {
-		server.Stats = stats
-	} else {
-		log.Printf("[ERROR] %s", err)
+	metrics, err := NewMetrics(*statsdUrl, *prefix)
+	if err == nil && *env == "production" {
+		server.Metrics = metrics
 	}
 	server.Start()
 
@@ -57,8 +56,8 @@ func main() {
 	}()
 
 	http.Handle("/subscribe", server)
-	log.Printf("[INFO] start port=%s amqp-url=%s statsd-url=%s statsd-prefix=%s"+
-		" compression=%t ", *port, *amqpUrl, *statsdUrl, *prefix, *compress)
+	log.Printf("[INFO] start env=%s port=%s amqp-url=%s statsd-url=%s statsd-prefix=%s"+
+		" compression=%t ", *env, *port, *amqpUrl, *statsdUrl, *prefix, *compress)
 	err = http.ListenAndServe(":"+*port, nil)
 	if err != nil {
 		log.Fatalf("[FATAL] Server %s", err)
