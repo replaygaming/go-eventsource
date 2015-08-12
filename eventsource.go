@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/luizbranco/eventsource"
+	amqp "github.com/replaygaming/amqp-consumer"
 )
 
 var (
@@ -31,7 +32,7 @@ func main() {
 	}
 	server.Start()
 
-	c, err := NewConsumer(*amqpURL, "es_ex", "fanout", "", "", "eventsource")
+	c, err := amqp.NewConsumer(*amqpURL, "es_ex", "fanout", "", "", "eventsource")
 	if err != nil {
 		log.Fatalf("[FATAL] AMQP consumer failed %s", err)
 	}
@@ -55,7 +56,7 @@ func main() {
 			}
 			m.Ack(false)
 		}
-		c.done <- nil
+		c.Done <- nil
 	}()
 
 	http.Handle("/subscribe", server)
