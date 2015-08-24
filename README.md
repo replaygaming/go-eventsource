@@ -14,3 +14,9 @@ then (re)start the rabbitmq daemon. Declare the host and exchange for the events
     rabbitmqadmin declare permission vhost=eventsource user=guest configure=".*" write=".*" read=".*"
 
     rabbitmqadmin -V eventsource declare exchange name=es_ex type=fanout durable=true
+
+## Cross-compiling
+
+    make compile
+    ls bin
+
