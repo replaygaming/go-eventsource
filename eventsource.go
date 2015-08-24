@@ -12,8 +12,8 @@ import (
 var (
 	env       = flag.String("env", "development", "Environment: development or production")
 	port      = flag.String("port", "3001", "Eventsource port")
-	amqpURL   = flag.String("amqp-url", "amqp://guest:guest@localhost:5672/eventsource", "AMQP URL")
-	statsdURL = flag.String("statsd-url", "localhost:8125", "StatsD URL")
+	amqpURL   = flag.String("amqp-url", "amqp://guest:guest@127.0.0.1:5672/eventsource", "AMQP URL")
+	statsdURL = flag.String("statsd-url", "127.0.0.1:8125", "StatsD URL")
 	prefix    = flag.String("statsd-prefix", "app.es_go", "StatsD Prefix")
 	compress  = flag.Bool("compression", false, "Enable zlib compression of data")
 )
