@@ -18,5 +18,8 @@ then (re)start the rabbitmq daemon. Declare the host and exchange for the events
 ## Cross-compiling
 
     make compile
-    ls bin
 
+Achitectures available:
+
+    bin/linux_amd64
+    bin/darwin_amd64
