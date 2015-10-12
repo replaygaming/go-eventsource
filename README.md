@@ -1,6 +1,27 @@
 # go-eventsource
 Server-sent stream to update game info in real-time
 
+## Usage
+
+```shell
+./bin/linux_amd64 -h
+
+  -amqp-queue string
+        AMQP Queue name (default "eventsource")
+  -amqp-url string
+        AMQP URL (default "amqp://guest:guest@127.0.0.1:5672/eventsource")
+  -compression
+        Enable zlib compression of data
+  -env string
+        Environment: development or production (default "development")
+  -port string
+        Eventsource port (default "3001")
+  -statsd-prefix string
+        StatsD Prefix (default "app.es_go")
+  -statsd-url string
+        StatsD URL (default "127.0.0.1:8125")
+```
+
 ## Configure RabbitMQ
 
 ### Install `rabbitmq` and `rabbitmqadmin`
@@ -27,7 +48,7 @@ Declare the host and exchange for the eventsource:
 
 ### Install `golang`
 
-    [sudo] apt-get install golang
+Follow the instructions at [Golang.org](https://golang.org). **DO NOT** install using your distro pkg manager.
 
 Set GOPATH
 
