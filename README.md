@@ -3,8 +3,10 @@ Server-sent stream to update game info in real-time
 
 ## Usage
 
+Get the binary for your [distribution](https://github.com/replaygaming/go-eventsource/releases)
+
 ```shell
-./bin/linux_amd64 -h
+./linux_amd64 -h
 
   -amqp-queue string
         AMQP Queue name (default "eventsource")
@@ -44,33 +46,17 @@ Declare the host and exchange for the eventsource:
     rabbitmqadmin declare permission vhost=eventsource user=guest configure=".*" write=".*" read=".*"
     rabbitmqadmin -V eventsource declare exchange name=es_ex type=fanout durable=true
 
-## Configure Go
+## Contribuing
 
-### Install `golang`
+### Install `go`
 
 Follow the instructions at [Golang.org](https://golang.org). **DO NOT** install using your distro pkg manager.
-
-Set GOPATH
-
-    # cd to project root
-    export GOPATH=`pwd`
 
 ### Get project dependencies
 
     go get .
 
-### Cross-compiling
+### Running 
 
-    make compile
-
-## Run `go-eventsource`
-
-OS: Linux ARCH: amd64
-
-    ./bin/linux_amd64
-
-OS: Darwin ARCH amd64
-
-    ./bin/darwin_amd64
-
-You can change `GOOS` and `GOARCH` in `Makefile`.
+    go build
+    ./go-eventsource
