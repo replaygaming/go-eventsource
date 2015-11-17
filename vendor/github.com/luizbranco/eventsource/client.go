@@ -41,7 +41,6 @@ func (c *client) listen(remove chan<- client) {
 		start := time.Now()
 		c.conn.SetWriteDeadline(time.Now().Add(10 * time.Millisecond))
 		_, err := c.conn.Write(e.data)
-		newrelic.EndTransaction(txnID)
 
 		if e.done != nil {
 			if err == nil {
@@ -51,6 +50,7 @@ func (c *client) listen(remove chan<- client) {
 			}
 		}
 
+		newrelic.EndTransaction(txnID)
 		if err != nil {
 			remove <- *c
 			c.conn.Close()
