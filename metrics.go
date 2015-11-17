@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/luizbranco/eventsource"
+	"github.com/paulsmith/newrelic-go-agent/newrelic"
 	"github.com/peterbourgon/g2s"
 )
 
@@ -29,6 +30,7 @@ func NewMetrics(addr string, prefix string) (StatdsD, error) {
 func (s StatdsD) ClientCount(count int) {
 	n := strconv.Itoa(count)
 	s.statsd.Gauge(1, s.prefix+"connections", n)
+	newrelic.RecordMetric("Connections/Count", float64(count))
 }
 
 func (s StatdsD) EventDone(e eventsource.Event, d time.Duration, c []time.Duration) {

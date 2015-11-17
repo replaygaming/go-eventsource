@@ -56,7 +56,8 @@ Follow the instructions at [Golang.org](https://golang.org). **DO NOT** install 
 
     go get .
 
-### Running 
+### Running
 
-    go build
-    ./go-eventsource
+    make
+    cd bin
+    LD_LIBRARY_PATH=lib ./eventsource
