@@ -1,10 +1,6 @@
 package eventsource
 
-import (
-	"time"
-
-	"github.com/paulsmith/newrelic-go-agent/newrelic"
-)
+import "time"
 
 // A server manages all clients, adding and removing them from the pool and
 // receiving incoming events to forward to clients
@@ -54,8 +50,8 @@ func send(e Event, clients []client) []time.Duration {
 	if size == 0 {
 		return durations
 	}
-	txnID := newrelic.BeginTransaction()
-	newrelic.SetTransactionName(txnID, "publish_event")
+
+	t := trace("publish_event")
 	done := make(chan time.Duration, size)
 	p := payload{data: e.Bytes(), done: done}
 
@@ -73,7 +69,7 @@ func send(e Event, clients []client) []time.Duration {
 		d := <-done
 		durations = append(durations, d)
 	}
-	newrelic.EndTransaction(txnID)
+	t <- true // ends tracing
 	return durations
 }
 

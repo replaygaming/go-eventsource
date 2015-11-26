@@ -3,8 +3,6 @@ package eventsource
 import (
 	"net"
 	"time"
-
-	"github.com/paulsmith/newrelic-go-agent/newrelic"
 )
 
 // A client holds the actual connection to the browser, the channels names the
@@ -36,8 +34,7 @@ func (c *client) listen(remove chan<- client) {
 			return
 		}
 
-		txnID := newrelic.BeginTransaction()
-		newrelic.SetTransactionName(txnID, "connection_write")
+		t := trace("connection_write")
 		start := time.Now()
 		c.conn.SetWriteDeadline(time.Now().Add(10 * time.Millisecond))
 		_, err := c.conn.Write(e.data)
@@ -50,7 +47,7 @@ func (c *client) listen(remove chan<- client) {
 			}
 		}
 
-		newrelic.EndTransaction(txnID)
+		t <- true // ends tracing
 		if err != nil {
 			remove <- *c
 			c.conn.Close()

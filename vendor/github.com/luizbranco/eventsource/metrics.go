@@ -3,6 +3,8 @@ package eventsource
 import (
 	"log"
 	"time"
+
+	"github.com/paulsmith/newrelic-go-agent/newrelic"
 )
 
 // Metrics interface allows basic instrumentation of the server
@@ -44,4 +46,15 @@ func (DefaultMetrics) EventDone(e Event, _ time.Duration, durations []time.Durat
 		avg = sum / count
 	}
 	log.Printf("Event completed - clients %.f, avg time %.2f\n", count, avg)
+}
+
+func trace(name string) chan<- bool {
+	c := make(chan bool, 1)
+	go func() {
+		txnID := newrelic.BeginTransaction()
+		newrelic.SetTransactionName(txnID, name)
+		<-c
+		newrelic.EndTransaction(txnID)
+	}()
+	return c
 }
