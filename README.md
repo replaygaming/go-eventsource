@@ -3,10 +3,8 @@ Server-sent stream to update game info in real-time
 
 ## Usage
 
-Get the binary for your [distribution](https://github.com/replaygaming/go-eventsource/releases)
-
 ```shell
-./linux_amd64 -h
+./bin/eventsource -h
 
   -amqp-queue string
         AMQP Queue name (default "eventsource")
@@ -22,6 +20,10 @@ Get the binary for your [distribution](https://github.com/replaygaming/go-events
         StatsD Prefix (default "app.es_go")
   -statsd-url string
         StatsD URL (default "127.0.0.1:8125")
+  -newrelic-license string
+        NewRelic License Key (default "")
+  -newrelic-app string
+        NewRelic App Name (default "")
 ```
 
 ## Configure RabbitMQ
