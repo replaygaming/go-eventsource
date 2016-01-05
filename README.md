@@ -62,3 +62,8 @@ Follow the instructions at [Golang.org](https://golang.org). **DO NOT** install 
     cd ~/go/src/github.com/replaygaming/go-eventsource
     go build
     ./go-eventsource
+
+### Important docs to read
+
+* https://golang.org/doc/install
+* https://golang.org/doc/code.html
