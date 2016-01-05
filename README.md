@@ -53,10 +53,12 @@ Declare the host and exchange for the eventsource:
 Follow the instructions at [Golang.org](https://golang.org). **DO NOT** install using your distro pkg manager.
 
 ### Get project dependencies
-
-    go get .
+    
+    export GOPATH=~/go
+    go get github.com/replaygaming/go-eventsource
 
 ### Running 
 
+    cd ~/go/src/github.com/replaygaming/go-eventsource
     go build
     ./go-eventsource
