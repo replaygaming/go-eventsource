@@ -48,20 +48,33 @@ Declare the host and exchange for the eventsource:
 
 ## Contribuing
 
-### Install `go`
+### Install
+
+#### Go on OS X
+
+Using Homebrew: `brew install go` or with support for crossc ompilation `brew install go --with-cc-common`
+
+#### Go on Linux
 
 Follow the instructions at [Golang.org](https://golang.org). **DO NOT** install using your distro pkg manager.
 
-### Get project dependencies
+#### Get code
+  
+Assuming you have some directory, `~/projects` in this example, where you want to keep the source:
+
+    cd ~/projects
+    git clone git@github.com:replaygaming/go-eventsource.git
+
+#### Go environment
     
-    export GOPATH=~/go
-    go get github.com/replaygaming/go-eventsource
+    export GOPATH=$GOPATH:~/projects/go-eventsource
 
-### Running 
+#### Compiling and running
 
-    cd ~/go/src/github.com/replaygaming/go-eventsource
+    cd ~/projects/go-eventsource/src/eventsource-server
+    go get .
     go build
-    ./go-eventsource
+    ./eventsource-server
 
 ### Important docs to read
 
