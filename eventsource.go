@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"os"
 	"log"
 	"net/http"
 
@@ -10,34 +10,40 @@ import (
 )
 
 var (
-	env       = flag.String("env", "development", "Environment: development or production")
-	port      = flag.String("port", "3001", "Eventsource port")
-	amqpURL   = flag.String("amqp-url", "amqp://guest:guest@127.0.0.1:5672/eventsource", "AMQP URL")
-	amqpQueue = flag.String("amqp-queue", "eventsource", "AMQP Queue name")
-	statsdURL = flag.String("statsd-url", "127.0.0.1:8125", "StatsD URL")
-	prefix    = flag.String("statsd-prefix", "app.es_go", "StatsD Prefix")
-	compress  = flag.Bool("compression", false, "Enable zlib compression of data")
+	env				string
+	port			string
+	amqpURL		string
+	amqpQueue	string
+	statsdURL	string
+	prefix		string
+	compress 	bool
 )
 
 func init() {
-	flag.Parse()
+	env 		  = os.Getenv("ENV")
+	port      = os.Getenv("PORT")
+	amqpURL   = os.Getenv("AMQP_URL")
+	amqpQueue = os.Getenv("AMQP_QUEUE")
+	statsdURL = os.Getenv("STATSD_URL")
+	prefix    = os.Getenv("STATSD_PREFIX")
+	compress  = os.Getenv("COMPRESS") == "true"
 }
 
 func main() {
 	server := &eventsource.Eventsource{
 		ChannelSubscriber: eventsource.QueryStringChannels{Name: "channels"},
 	}
-	metrics, err := NewMetrics(*statsdURL, *prefix)
-	if err == nil && *env == "production" {
+	metrics, err := NewMetrics(statsdURL, prefix)
+	if err == nil && env == "production" {
 		server.Metrics = metrics
 	}
 	server.Start()
 
-	c, err := amqp.NewConsumer(*amqpURL, "es_ex", "fanout", *amqpQueue, "", "eventsource")
+	c, err := amqp.NewConsumer(amqpURL, "es_ex", "fanout", amqpQueue, "", "eventsource")
 	if err != nil {
 		log.Fatalf("[FATAL] AMQP consumer failed %s", err)
 	}
-	messages, err := c.Consume(*amqpQueue)
+	messages, err := c.Consume(amqpQueue)
 	if err != nil {
 		log.Fatalf("[FATAL] AMQP queue failed %s", err)
 	}
@@ -51,7 +57,7 @@ func main() {
 				e := eventsource.DefaultEvent{
 					Message:  data,
 					Channels: channels,
-					Compress: *compress,
+					Compress: compress,
 				}
 				server.Send(e)
 			}
@@ -62,9 +68,9 @@ func main() {
 
 	http.Handle("/subscribe", server)
 	log.Printf("[INFO] start env=%s port=%s amqp-url=%s amqp-queue=%s"+
-		" statsd-url=%s statsd-prefix=%s compression=%t", *env, *port, *amqpURL,
-		*amqpQueue, *statsdURL, *prefix, *compress)
-	err = http.ListenAndServe(":"+*port, nil)
+		" statsd-url=%s statsd-prefix=%s compression=%t", env, port, amqpURL,
+		amqpQueue, statsdURL, prefix, compress)
+	err = http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatalf("[FATAL] Server %s", err)
 	}
