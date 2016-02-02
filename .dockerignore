@@ -1,0 +1,10 @@
+.DS_Store
+go-eventsource
+Dockerfile
+.git
+Makefile
+codeship*.yml
+README.md
+LICENSE
+codeship.aes
+/**/google_deployment.env

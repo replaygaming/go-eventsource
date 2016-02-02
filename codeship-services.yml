@@ -1,0 +1,26 @@
+data:
+  image: busybox
+  volumes:
+    - ./tmp:/artifacts
+
+compile:
+  build:
+    dockerfile_path: Dockerfile.build
+  volumes_from:
+    - data
+
+dist:
+  build:
+    image: go-eventsource
+    dockerfile_path: Dockerfile.dist
+  volumes_from:
+    - data
+
+deploy:
+  build:
+    dockerfile_path: Dockerfile.deploy
+  environment:
+    GOOGLE_CONTAINER_NAME: "us.gcr.io/replay-gaming/go-eventsource"
+    DEFAULT_ZONE: "us-central1-c"
+  encrypted_env_file: google_deployment.env.encrypted
+  add_docker: true
