@@ -6,8 +6,3 @@
   command: true
 - service: deploy
   command: /deploy.sh
-  tag: "{{ .RepoName }}-{{ .StringTime }}-{{ .CommitID }}"
-  # type: push
-  # image_name: replay-gaming/go-eventsource
-  # registry: https://us.gcr.io/
-  # encrypted_dockercfg_path: google_deployment.env.encrypted
