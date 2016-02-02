@@ -8,6 +8,7 @@ compile:
     dockerfile_path: Dockerfile.build
   volumes_from:
     - data
+  cached: true
 
 dist:
   build:
@@ -24,3 +25,4 @@ deploy:
     DEFAULT_ZONE: "us-central1-c"
   encrypted_env_file: google_deployment.env.encrypted
   add_docker: true
+  cached: true

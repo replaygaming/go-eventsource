@@ -1,12 +1,13 @@
 FROM alpine:3.2
 
+ENV GOPATH=/go
+RUN mkdir -p /go/src/github.com/replaygaming/go-eventsource
+WORKDIR /go/src/github.com/replaygaming/go-eventsource
+
 RUN apk add --update go
 RUN apk add --update git
 
-ENV GOPATH=/go
-RUN mkdir -p /go/src/github.com/replaygaming/go-eventsource
 ADD *.go /go/src/github.com/replaygaming/go-eventsource/
 
-WORKDIR /go/src/github.com/replaygaming/go-eventsource
 RUN go get
 RUN go build
