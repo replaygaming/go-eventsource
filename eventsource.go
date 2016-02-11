@@ -25,7 +25,7 @@ func init() {
 	amqpURL   = os.Getenv("AMQP_URL")
 	amqpQueue = os.Getenv("AMQP_QUEUE")
 	statsdURL = os.Getenv("STATSD_URL")
-	prefix    = os.Getenv("STATSD_PREFIX")
+	prefix    = "eventsource"
 	compress  = os.Getenv("COMPRESS") == "true"
 }
 
