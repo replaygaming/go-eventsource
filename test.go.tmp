@@ -1,9 +1,5 @@
 package main
 
-import (
-	"./cloud_metrics"
-)
-
 func main() {
 
 	metrics, err := NewMetricAgent("eventsource")

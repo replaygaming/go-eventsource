@@ -19,7 +19,7 @@ type GoogleCloudMonitoringMetrics struct {
 	remote cloudmonitoring.Service
 }
 
-func NewMetricAgent(prefix string){
+func NewMetrics(prefix string){
 	monitor := GoogleCloudMonitoringMetrics{prefix: prefix + "."}
 
 	// Use oauth2.NoContext if there isn't a good context to pass in.
@@ -39,6 +39,7 @@ func NewMetricAgent(prefix string){
 	}
 
 	monitor.remote = *cloudmonitoringService
+	return monitor, nil
 }
 
 func (monitor GoogleCloudMonitoringMetrics) ClientCount(count int) {
