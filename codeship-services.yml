@@ -18,7 +18,7 @@ compile:
 
 dist:
   build:
-    image: go-eventsource
+    image: gcr.io/replay-gaming/go-eventsource
     dockerfile_path: Dockerfile.dist
   cached: true
 
