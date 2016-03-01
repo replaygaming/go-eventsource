@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/luizbranco/eventsource"
-	amqpConsumer "github.com/replaygaming/amqp-consumer"
 	amqp "github.com/streadway/amqp"
 )
 
@@ -25,7 +24,7 @@ func init() {
 	amqpURL = os.Getenv("AMQP_URL")
 	exchange = os.Getenv("EXCHANGE")
 	prefix = "eventsource"
-	compress = os.Getenv("COMPRESS") == "true"
+	compress = os.Getenv("COMPRESS") != "false"
 }
 
 func warn(message string, err error) {
@@ -50,24 +49,24 @@ func newServerWithMetrics(prefix string) *eventsource.Eventsource {
 	return server
 }
 
-func newConsumer(amqpURL string, exchange string) *amqpConsumer.Consumer {
+func newConsumer(amqpURL string, exchange string) *Consumer {
 	// NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (*Consumer, error)
-	consumer, err := amqpConsumer.NewConsumer(amqpURL, exchange, "fanout", "", "", "eventsource")
+	consumer, err := NewConsumer(amqpURL, exchange, "fanout", "", "", "eventsource")
 	if err != nil {
 		fatal("AMQP consumer failed", err)
 	}
 	return consumer
 }
 
-func consume(exchange string, consumer *amqpConsumer.Consumer) <-chan amqp.Delivery {
-	messages, err := consumer.Consume(exchange)
+func consume(consumer *Consumer) <-chan amqp.Delivery {
+	messages, err := consumer.Consume()
 	if err != nil {
 		fatal("AMQP queue failed", err)
 	}
 	return messages
 }
 
-func messageLoop(messages <-chan amqp.Delivery, server *eventsource.Eventsource, consumer *amqpConsumer.Consumer) {
+func messageLoop(messages <-chan amqp.Delivery, server *eventsource.Eventsource, consumer *Consumer) {
 	for message := range messages {
 		data, channels, err := parseMessage(message.Body)
 		if err != nil {
@@ -100,7 +99,7 @@ func startServing(server *eventsource.Eventsource) {
 func main() {
 	server := newServerWithMetrics(prefix)
 	consumer := newConsumer(amqpURL, exchange)
-	messages := consume(exchange, consumer)
+	messages := consume(consumer)
 
 	go messageLoop(messages, server, consumer)
 
