@@ -11,5 +11,20 @@
 - service: deploy
   type: push
   image_name: us.gcr.io/replay-gaming/go-eventsource
+  image_tag: "latest"
+  registry: https://us.gcr.io
+  dockercfg_service: gcr_dockercfg
+
+- service: deploy
+  type: push
+  image_name: us.gcr.io/replay-gaming/go-eventsource
+  image_tag: "{{.StringTime}}"
+  registry: https://us.gcr.io
+  dockercfg_service: gcr_dockercfg
+
+- service: deploy
+  type: push
+  image_name: us.gcr.io/replay-gaming/go-eventsource
+  image_tag: "{{.CommitID}}"
   registry: https://us.gcr.io
   dockercfg_service: gcr_dockercfg
