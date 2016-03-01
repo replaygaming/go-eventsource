@@ -1,6 +1,7 @@
 .DS_Store
 go-eventsource
 bin
+tmp
 
 _testmain.go
 
