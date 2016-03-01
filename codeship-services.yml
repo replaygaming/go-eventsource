@@ -10,7 +10,7 @@ gcr_dockercfg:
 
 compile:
   build:
-    image: gcr.io/replay-gaming/go-eventsource-compile
+    image: us.gcr.io/replay-gaming/go-eventsource-compile
     dockerfile_path: Dockerfile.build
   volumes_from:
     - data
@@ -18,9 +18,8 @@ compile:
 
 dist:
   build:
-    image: gcr.io/replay-gaming/go-eventsource
+    image: us.gcr.io/replay-gaming/go-eventsource
     dockerfile_path: Dockerfile.dist
-  cached: true
 
 deploy:
   image: busybox

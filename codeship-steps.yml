@@ -1,13 +1,15 @@
 - service: data
   command: true
+
 - service: compile
   command: cp /go/src/github.com/replaygaming/go-eventsource/go-eventsource /artifacts
   dockercfg_service: gcr_dockercfg
+
 - service: dist
   command: true
-  dockercfg_service: gcr_dockercfg
+
 - service: deploy
   type: push
-  image_name: gcr.io/replay-gaming/go-eventsource
-  registry: https://gcr.io
+  image_name: us.gcr.io/replay-gaming/go-eventsource
+  registry: https://us.gcr.io
   dockercfg_service: gcr_dockercfg
