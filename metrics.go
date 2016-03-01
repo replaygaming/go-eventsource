@@ -45,6 +45,7 @@ func NewMetrics(prefix string) (GoogleCloudMonitoring, error) {
 func (monitor GoogleCloudMonitoring) ClientCount(count int) {
 	// n := strconv.Itoa(count)
 	// s.statsd.Gauge(1, s.prefix+"connections", n)
+	log.Printf("[METRIC] %s.connections: %d\n", monitor.base_url, count)
 }
 
 func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration time.Duration, eventdurations []time.Duration) {
@@ -56,19 +57,20 @@ func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration
 	// 	}
 	// }
 
-	var sum float64
-	var count float64
+	var sum int64
+	var count int64
 	var avg float64
 	for _, d := range eventdurations {
 		if d > 0 {
-			sum += float64(d)
-			count++
+			sum += d.Nanoseconds()
 		}
 	}
+	count = int64(len(eventdurations))
 	if count > 0 {
-		avg = sum / count
+		avg = float64(sum) / float64(count)
 	}
-	log.Printf("Event completed - clients %.f, avg time %.2f\n", count, avg)
+	log.Printf("[METRIC] %s.event_distributed.clients: %d\n", monitor.base_url, count)
+	log.Printf("[METRIC] %s.event_distributed.avg_time: %dns\n", monitor.base_url, avg)
 }
 
 //// If you need a oauth2.TokenSource, use the DefaultTokenSource function:

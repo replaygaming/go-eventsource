@@ -1,6 +1,7 @@
 package main
 
 import "encoding/json"
+import "log"
 
 type payload struct {
 	Event    string
@@ -23,6 +24,9 @@ func parseMessage(message []byte) ([]byte, []string, error) {
 		return nil, nil, err
 	}
 
+	log.Printf("[INFO] parseMessage")
+	log.Printf("[INFO]     Incomming - event=%s, data=%s", p.Event, p.Data)
+
 	e := event{Event: p.Event, Data: p.Data}
 	data, err := json.Marshal(e)
 	if err != nil {
@@ -33,6 +37,8 @@ func parseMessage(message []byte) ([]byte, []string, error) {
 	if len(p.Channels) == 0 {
 		p.Channels = []string{"*"}
 	}
+
+	log.Printf("[INFO]     Outgoing - %s", data)
 
 	return data, p.Channels, nil
 }
