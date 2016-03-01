@@ -10,7 +10,7 @@ gcr_dockercfg:
 
 compile:
   build:
-    image: go-eventsource-compile
+    image: gcr.io/replay-gaming/go-eventsource-compile
     dockerfile_path: Dockerfile.build
   volumes_from:
     - data
