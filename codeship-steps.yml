@@ -2,14 +2,12 @@
   command: true
 - service: compile
   command: cp /go/src/github.com/replaygaming/go-eventsource/go-eventsource /artifacts
-  encrypted_env_file: google_deployment.env.encrypted
+  dockercfg_service: gcr_dockercfg
 - service: dist
-  command: rm /artifacts/go-eventsource
-  encrypted_env_file: google_deployment.env.encrypted
+  command: true
+  dockercfg_service: gcr_dockercfg
 - service: deploy
   type: push
-  image_name: replay-gaming/go-eventsource
-  registry: https://us.gcr.io
-  encrypted_env_file: google_deployment.env.encrypted
-  # command: /deploy.sh
-  # encrypted_env_file: google_deployment.env.encrypted
+  image_name: gcr.io/replay-gaming/go-eventsource
+  registry: https://gcr.io
+  dockercfg_service: gcr_dockercfg

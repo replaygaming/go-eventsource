@@ -3,9 +3,14 @@ data:
   volumes:
     - ./tmp:/artifacts
 
+gcr_dockercfg:
+  image: codeship/gcr-dockercfg-generator
+  add_docker: true
+  encrypted_env_file: google_deployment.env.encrypted
+
 compile:
   build:
-    image: us.gcr.io/replay-gaming/go-eventsource-compile
+    image: go-eventsource-compile
     dockerfile_path: Dockerfile.build
   volumes_from:
     - data
@@ -13,18 +18,9 @@ compile:
 
 dist:
   build:
-    image: us.gcr.io/replay-gaming/go-eventsource
+    image: go-eventsource
     dockerfile_path: Dockerfile.dist
-  volumes_from:
-    - data
+  cached: true
 
 deploy:
-  build:
-    image: us.gcr.io/replay-gaming/deploy
-    dockerfile_path: Dockerfile.deploy
-  # environment:
-  #   GOOGLE_CONTAINER_NAME: us.gcr.io/replay-gaming/go-eventsource
-  #   DEFAULT_ZONE: us-central1-c
-  # encrypted_env_file: google_deployment.env.encrypted
-  # add_docker: true
-  # cached: true
+  image: busybox
