@@ -19,12 +19,18 @@ var (
 )
 
 func init() {
+	log.Printf("[INFO] Starting")
+
 	environment = os.Getenv("ENV")
 	port = os.Getenv("PORT")
 	amqpURL = os.Getenv("AMQP_URL")
 	exchange = os.Getenv("EXCHANGE")
 	prefix = "eventsource"
 	compress = os.Getenv("COMPRESS") != "false"
+
+	log.Printf("[INFO] INIT - environment=%s, port=%s, AMPQ URL=%s, exchange=%s,"+
+		"prefix=%s, compress=%t", environment, port, amqpURL,
+		exchange, prefix, compress)
 }
 
 func warn(message string, err error) {
