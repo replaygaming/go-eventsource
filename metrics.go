@@ -11,12 +11,67 @@ import (
 	"google.golang.org/api/cloudmonitoring/v2beta2"
 )
 
-//const sampleRate = 0.25
-//const roundUpMs = 1e3
-
 type GoogleCloudMonitoring struct {
 	base_url string
 	remote   cloudmonitoring.TimeseriesService
+}
+
+type Timeseries struct {
+	base_url string
+	metric_name string
+	start time.Time
+	end time.Time
+	value float64
+}
+
+func createTimeseries( args Timeseries )(*cloudmonitoring.TimeseriesPoint){
+
+	var end_string string
+	var start_string string
+
+	start_string = args.start.Format(time.RFC3339)
+
+	if &args.end != nil {
+		end_string = args.end.Format(time.RFC3339)
+	} else {
+		end_string = start_string
+	}
+
+	description := cloudmonitoring.TimeseriesDescriptor{
+		Labels: map[string]string{
+			args.base_url + "implementation":"golang",
+		},
+		Metric: args.base_url + args.metric_name,
+		Project: "replay-gaming",
+	}
+
+	point := cloudmonitoring.Point{
+		Start: start_string,
+		End: end_string,
+		DoubleValue: &args.value,
+	}
+
+	timeseries := cloudmonitoring.TimeseriesPoint{
+		Point: &point,
+		TimeseriesDesc: &description,
+	}
+
+	return &timeseries
+}
+
+func pushMetrics( points []*cloudmonitoring.TimeseriesPoint ){
+	request := cloudmonitoring.WriteTimeseriesRequest{
+		CommonLabels: map[string]string{
+			"container.googleapis.com/container_name": "eventsource",
+		},
+		Timeseries: points,
+	}
+
+	response, err := monitor.remote.Write("replay-poker", &request).Do()
+	if err != nil {
+		log.Fatal("pushMetrics - Unable to write timeseries: %v", err)
+	}
+	log.Printf("pushMetrics - Response: %s", response)
 }
 
 func NewMetrics(prefix string) (GoogleCloudMonitoring, error) {
@@ -42,82 +97,60 @@ func NewMetrics(prefix string) (GoogleCloudMonitoring, error) {
 }
 
 func (monitor GoogleCloudMonitoring) ClientCount(count int) {
-	// n := strconv.Itoa(count)
-	// s.statsd.Gauge(1, s.prefix+"connections", n)
 	log.Printf("[METRIC] %sconnections: %d\n", monitor.base_url, count)
 
-	count64 := int64( count )
-	now, err := time.Now().UTC().MarshalText()
-	if err != nil {
-		log.Fatal("ClientCount - Unable to get current time: %v", err)
-	}
-
-	description := cloudmonitoring.TimeseriesDescriptor{
-		Labels: map[string]string{
-			monitor.base_url + "implementation":"golang",
-		},
-    Metric: monitor.base_url + "connections",
-    Project: "replay-gaming",
-	}
-
-	point := cloudmonitoring.Point{
-		Start: string(now),
-		End: string(now),
-		Int64Value: &count64,
-	}
-
-	timeseries := cloudmonitoring.TimeseriesPoint{
-    Point: &point,
-  	TimeseriesDesc: &description,
-	}
+	timeseries := createTimeseries(Timeseries{
+		base_url: monitor.base_url,
+		metric_name: "connections",
+		start: time.Now().UTC(),
+		value: float64(count),
+	})
 
 	points := []*cloudmonitoring.TimeseriesPoint{
-		&timeseries,
+		timeseries,
 	}
 
-	request := cloudmonitoring.WriteTimeseriesRequest{
-		CommonLabels: map[string]string{
-			"container.googleapis.com/container_name": "eventsource",
-		},
-		Timeseries: points,
-	}
-
-	response, err := monitor.remote.Write("replay-poker", &request).Do()
-	if err != nil {
-		log.Fatal("ClientCount - Unable to write timeseries: %v", err)
-	}
-	log.Printf("ClientCount - Response: %s", response)
+	pushMetrics( points )
 }
 
 func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration time.Duration, eventdurations []time.Duration) {
-	// s.statsd.Counter(1, s.prefix+"publish.count", 1)
-	// s.statsd.Timing(sampleRate, s.prefix+"publish.timing", d*roundUpMs)
-	// for _, t := range c {
-	// 	if t > 0 {
-	// 		s.statsd.Timing(sampleRate, s.prefix+"publish.connection_write.timing", t*roundUpMs)
-	// 	}
-	// }
-
 	var sum int64
 	var count int64
 	var avg float64
+
 	for _, d := range eventdurations {
 		if d > 0 {
 			sum += d.Nanoseconds()
 		}
 	}
+
 	count = int64(len(eventdurations))
+
 	if count > 0 {
 		avg = float64(sum) / float64(count)
 	}
+
 	log.Printf("[METRIC] %s.event_distributed.clients: %d\n", monitor.base_url, count)
 	log.Printf("[METRIC] %s.event_distributed.avg_time: %dns\n", monitor.base_url, avg)
+
+	clients_timeseries := createTimeseries(Timeseries{
+		base_url: monitor.base_url,
+		metric_name: "clients",
+		start: time.Now().UTC(),
+		value: float64(count),
+	})
+
+	avg_time_timeseries := createTimeseries(Timeseries{
+		base_url: monitor.base_url,
+		metric_name: "avg_time",
+		start: time.Now().UTC(),
+		value: avg,
+	})
+
+	points := []*cloudmonitoring.TimeseriesPoint{
+		clients_timeseries,
+		avg_time_timeseries,
+	}
+
+	pushMetrics( points )
 }
-
-//// If you need a oauth2.TokenSource, use the DefaultTokenSource function:
-
-//ts, err := google.DefaultTokenSource(ctx, scope1, scope2, ...)
-//if err != nil {
-//  // Handle error.
-//}
-//httpClient := oauth2.NewClient(ctx, ts)
