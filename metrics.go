@@ -17,14 +17,14 @@ type GoogleCloudMonitoring struct {
 }
 
 type Timeseries struct {
-	base_url string
+	base_url    string
 	metric_name string
-	start time.Time
-	end time.Time
-	value float64
+	start       time.Time
+	end         time.Time
+	value       float64
 }
 
-func createTimeseries( args Timeseries )(*cloudmonitoring.TimeseriesPoint){
+func createTimeseries(args Timeseries) *cloudmonitoring.TimeseriesPoint {
 
 	var end_string string
 	var start_string string
@@ -39,27 +39,27 @@ func createTimeseries( args Timeseries )(*cloudmonitoring.TimeseriesPoint){
 
 	description := cloudmonitoring.TimeseriesDescriptor{
 		Labels: map[string]string{
-			args.base_url + "implementation":"golang",
+			args.base_url + "implementation": "golang",
 		},
-		Metric: args.base_url + args.metric_name,
+		Metric:  args.base_url + args.metric_name,
 		Project: "replay-gaming",
 	}
 
 	point := cloudmonitoring.Point{
-		Start: start_string,
-		End: end_string,
+		Start:       start_string,
+		End:         end_string,
 		DoubleValue: &args.value,
 	}
 
 	timeseries := cloudmonitoring.TimeseriesPoint{
-		Point: &point,
+		Point:          &point,
 		TimeseriesDesc: &description,
 	}
 
 	return &timeseries
 }
 
-func pushMetrics( points []*cloudmonitoring.TimeseriesPoint ){
+func pushMetrics(points []*cloudmonitoring.TimeseriesPoint) {
 	request := cloudmonitoring.WriteTimeseriesRequest{
 		CommonLabels: map[string]string{
 			"container.googleapis.com/container_name": "eventsource",
@@ -100,17 +100,17 @@ func (monitor GoogleCloudMonitoring) ClientCount(count int) {
 	log.Printf("[METRIC] %sconnections: %d\n", monitor.base_url, count)
 
 	timeseries := createTimeseries(Timeseries{
-		base_url: monitor.base_url,
+		base_url:    monitor.base_url,
 		metric_name: "connections",
-		start: time.Now().UTC(),
-		value: float64(count),
+		start:       time.Now().UTC(),
+		value:       float64(count),
 	})
 
 	points := []*cloudmonitoring.TimeseriesPoint{
 		timeseries,
 	}
 
-	pushMetrics( points )
+	pushMetrics(points)
 }
 
 func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration time.Duration, eventdurations []time.Duration) {
@@ -134,17 +134,17 @@ func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration
 	log.Printf("[METRIC] %s.event_distributed.avg_time: %dns\n", monitor.base_url, avg)
 
 	clients_timeseries := createTimeseries(Timeseries{
-		base_url: monitor.base_url,
+		base_url:    monitor.base_url,
 		metric_name: "clients",
-		start: time.Now().UTC(),
-		value: float64(count),
+		start:       time.Now().UTC(),
+		value:       float64(count),
 	})
 
 	avg_time_timeseries := createTimeseries(Timeseries{
-		base_url: monitor.base_url,
+		base_url:    monitor.base_url,
 		metric_name: "avg_time",
-		start: time.Now().UTC(),
-		value: avg,
+		start:       time.Now().UTC(),
+		value:       avg,
 	})
 
 	points := []*cloudmonitoring.TimeseriesPoint{
@@ -152,5 +152,5 @@ func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration
 		avg_time_timeseries,
 	}
 
-	pushMetrics( points )
+	pushMetrics(points)
 }
