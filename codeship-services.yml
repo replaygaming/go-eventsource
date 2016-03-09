@@ -20,6 +20,8 @@ dist:
   build:
     image: us.gcr.io/replay-gaming/go-eventsource
     dockerfile_path: Dockerfile.dist
+  volumes_from:
+    - data
 
 deploy:
   image: busybox
