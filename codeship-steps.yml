@@ -9,7 +9,7 @@
   command: true
 
 - name: deployment
-  service: deploy
+  service: dist
   type: parallel
   steps:
   - type: push
