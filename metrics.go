@@ -59,7 +59,7 @@ func createTimeseries(args Timeseries) *cloudmonitoring.TimeseriesPoint {
 	return &timeseries
 }
 
-func pushMetrics(points []*cloudmonitoring.TimeseriesPoint) {
+func pushMetrics(points []*cloudmonitoring.TimeseriesPoint, remote cloudmonitoring.TimeseriesService) {
 	request := cloudmonitoring.WriteTimeseriesRequest{
 		CommonLabels: map[string]string{
 			"container.googleapis.com/container_name": "eventsource",
@@ -67,7 +67,7 @@ func pushMetrics(points []*cloudmonitoring.TimeseriesPoint) {
 		Timeseries: points,
 	}
 
-	response, err := monitor.remote.Write("replay-poker", &request).Do()
+	response, err := remote.Write("replay-poker", &request).Do()
 	if err != nil {
 		log.Fatal("pushMetrics - Unable to write timeseries: %v", err)
 	}
@@ -110,7 +110,7 @@ func (monitor GoogleCloudMonitoring) ClientCount(count int) {
 		timeseries,
 	}
 
-	pushMetrics(points)
+	pushMetrics(points, monitor.remote)
 }
 
 func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration time.Duration, eventdurations []time.Duration) {
@@ -152,5 +152,5 @@ func (monitor GoogleCloudMonitoring) EventDone(event eventsource.Event, duration
 		avg_time_timeseries,
 	}
 
-	pushMetrics(points)
+	pushMetrics(points, monitor.remote)
 }
