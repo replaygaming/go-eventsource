@@ -14,14 +14,11 @@ compile:
     dockerfile_path: Dockerfile.build
   volumes_from:
     - data
-  cached: true
 
 dist:
   build:
     image: us.gcr.io/replay-gaming/go-eventsource
     dockerfile_path: Dockerfile.dist
-  volumes_from:
-    - data
 
 deploy:
   image: busybox
