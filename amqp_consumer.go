@@ -10,7 +10,7 @@ import (
 // Consumer wraps the AMQP connection and channel
 type Consumer struct {
 	conn    *amqp.Connection
-  queue   amqp.Queue
+	queue   amqp.Queue
 	channel *amqp.Channel
 	tag     string
 	Done    chan error
@@ -68,10 +68,10 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key,
 
 	if err = c.channel.QueueBind(
 		c.queue.Name, // name of the queue
-		key,        // routing key (ignored on fanout)
-		exchange,   // name of the exchange
-		false,      // noWait
-		nil,        // arguments
+		key,          // routing key (ignored on fanout)
+		exchange,     // name of the exchange
+		false,        // noWait
+		nil,          // arguments
 	); err != nil {
 		return nil, fmt.Errorf("Queue Bind: %s", err)
 	}
@@ -83,12 +83,12 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key,
 func (c *Consumer) Consume() (<-chan amqp.Delivery, error) {
 	deliveries, err := c.channel.Consume(
 		c.queue.Name, // name
-		c.tag, // consumerTag,
-		false, // noAck
-		false, // exclusive
-		false, // noLocal
-		false, // noWait
-		nil,   // arguments
+		c.tag,        // consumerTag,
+		false,        // noAck
+		false,        // exclusive
+		false,        // noLocal
+		false,        // noWait
+		nil,          // arguments
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Queue Consume: %s", err)
