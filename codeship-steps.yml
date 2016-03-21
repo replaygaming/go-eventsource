@@ -1,8 +1,6 @@
-- service: data
-  command: true
-
 - service: compile
   command: cp /go/src/github.com/replaygaming/go-eventsource/go-eventsource /artifacts
+  cached: true
   dockercfg_service: gcr_dockercfg
 
 - service: dist

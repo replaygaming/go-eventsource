@@ -1,7 +1,0 @@
-FROM codeship/google-cloud-deployment
-
-RUN gcloud components update
-
-ADD ./deploy.sh /deploy.sh
-
-CMD /deploy.sh

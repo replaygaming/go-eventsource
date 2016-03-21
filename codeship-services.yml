@@ -1,8 +1,3 @@
-data:
-  image: busybox
-  volumes:
-    - ./tmp:/artifacts
-
 gcr_dockercfg:
   image: codeship/gcr-dockercfg-generator
   add_docker: true
@@ -12,13 +7,10 @@ compile:
   build:
     image: us.gcr.io/replay-gaming/go-eventsource-compile
     dockerfile_path: Dockerfile.build
-  volumes_from:
-    - data
+  volumes:
+    - ./tmp:/artifacts
 
 dist:
   build:
     image: us.gcr.io/replay-gaming/go-eventsource
     dockerfile_path: Dockerfile.dist
-
-deploy:
-  image: busybox
