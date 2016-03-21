@@ -69,9 +69,10 @@ func pushMetrics(points []*cloudmonitoring.TimeseriesPoint, remote cloudmonitori
 
 	response, err := remote.Write("replay-gaming", &request).Do()
 	if err != nil {
-		log.Fatal("pushMetrics - Unable to write timeseries: ", err)
+		log.Printf("pushMetrics - Unable to write timeseries: %v", err)
+	} else {
+		log.Printf("pushMetrics - Response: %s", response)
 	}
-	log.Printf("pushMetrics - Response: %s", response)
 }
 
 func createMetricDescriptor(prefix string, name string, description string) *cloudmonitoring.MetricDescriptor {
@@ -100,7 +101,7 @@ func createMetric(prefix string, metricDescriptorsService *cloudmonitoring.Metri
 	metricDescriptor := createMetricDescriptor(prefix, name, description)
 	metricDescriptor, err := metricDescriptorsService.Create("replay-gaming", metricDescriptor).Do()
 	if err != nil {
-		log.Fatal("Unable to create '"+name+"' metric: ", err)
+		log.Printf("Unable to create '%s' metric: %v", name, err)
 	}
 }
 
@@ -120,12 +121,12 @@ func NewMetrics(prefix string) (GoogleCloudMonitoring, error) {
 		cloudmonitoring.MonitoringScope,
 	)
 	if err != nil {
-		log.Fatal("Unable to get default client: ", err)
+		log.Printf("Unable to get default client: %v", err)
 	}
 
 	cloudmonitoringService, err := cloudmonitoring.New(client)
 	if err != nil {
-		log.Fatal("Unable to create monitoring service: ", err)
+		log.Printf("Unable to create monitoring service: %v", err)
 	}
 
 	createMetrics(prefix, cloudmonitoringService)
