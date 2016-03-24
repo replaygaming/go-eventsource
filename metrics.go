@@ -119,6 +119,7 @@ func NewMetrics(prefix string) (GoogleCloudMonitoring, error) {
 	client, err := google.DefaultClient(
 		context.Background(),
 		cloudmonitoring.MonitoringScope,
+		cloudmonitoring.CloudPlatformScope,
 	)
 	if err != nil {
 		log.Printf("Unable to get default client: %v", err)
