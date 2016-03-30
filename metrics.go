@@ -83,7 +83,7 @@ func createMetricDescriptor(prefix string, name string, description string) *clo
 
 	label := cloudmonitoring.MetricDescriptorLabelDescriptor{
 		Description: "Application",
-		Key:         "eventsource",
+		Key:         "custom.cloudmonitoring.googleapis.com/" + prefix + "/",
 	}
 
 	return &cloudmonitoring.MetricDescriptor{
