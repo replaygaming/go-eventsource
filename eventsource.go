@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/luizbranco/eventsource"
+	"github.com/replaygaming/eventsource"
 	amqp "github.com/streadway/amqp"
 )
 

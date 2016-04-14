@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/luizbranco/eventsource"
+	"github.com/replaygaming/eventsource"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
