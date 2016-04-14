@@ -11,7 +11,6 @@ import (
 
 var (
 	environment string
-	port        string
 	amqpURL     string
 	exchange    string
 	prefix      string
@@ -22,14 +21,13 @@ func init() {
 	log.Printf("[INFO] Starting")
 
 	environment = os.Getenv("ENV")
-	port = os.Getenv("PORT")
 	amqpURL = os.Getenv("AMQP_URL")
 	exchange = os.Getenv("EXCHANGE")
 	prefix = "eventsource"
 	compress = os.Getenv("COMPRESS") != "false"
 
-	log.Printf("[INFO] INIT - environment=%s, port=%s, AMPQ URL=%s, exchange=%s,"+
-		"prefix=%s, compress=%t", environment, port, amqpURL,
+	log.Printf("[INFO] INIT - environment=%s, AMPQ URL=%s, exchange=%s,"+
+		"prefix=%s, compress=%t", environment, amqpURL,
 		exchange, prefix, compress)
 }
 
@@ -93,10 +91,10 @@ func messageLoop(messages <-chan amqp.Delivery, server *eventsource.Eventsource,
 func startServing(server *eventsource.Eventsource) {
 	http.Handle("/subscribe", server)
 
-	log.Printf("[INFO] STARTING - environment=%s, port=%s, AMPQ URL=%s, exchange=%s,"+
-		" stats prefix=%s, compression=%t", environment, port, amqpURL,
+	log.Printf("[INFO] STARTING - environment=%s, AMPQ URL=%s, exchange=%s,"+
+		" stats prefix=%s, compression=%t", environment, amqpURL,
 		exchange, prefix, compress)
-	err := http.ListenAndServe(":"+port, nil)
+	err := http.ListenAndServe(":80", nil)
 	if err != nil {
 		fatal("Server", err)
 	}
