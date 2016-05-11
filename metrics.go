@@ -9,6 +9,7 @@ import (
 
 type LogMonitoring struct {
 	prefix string
+	connections int
 }
 
 func NewMetrics(prefix string) (LogMonitoring, error) {
@@ -18,7 +19,10 @@ func NewMetrics(prefix string) (LogMonitoring, error) {
 }
 
 func (monitor LogMonitoring) ClientCount(count int) {
-	log.Printf("[METRIC] %sconnections: %d\n", monitor.prefix, count)
+	if count != monitor.connections {
+		monitor.connections = count
+		log.Printf("[METRIC] %sconnections: %d\n", monitor.prefix, count)
+	}
 }
 
 func (monitor LogMonitoring) EventDone(event eventsource.Event, duration time.Duration, eventdurations []time.Duration) {
