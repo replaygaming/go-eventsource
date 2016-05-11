@@ -14,6 +14,8 @@ var (
 	amqpURL     string
 	exchange    string
 	prefix      string
+	username    string
+	password    string
 	compress    bool
 )
 
@@ -24,11 +26,13 @@ func init() {
 	amqpURL = os.Getenv("AMQP_URL")
 	exchange = os.Getenv("EXCHANGE")
 	prefix = "eventsource"
+	username = os.Getenv("EVENTSOURCE_USER")
+	password = os.Getenv("EVENTSOURCE_PASSWORD")
 	compress = os.Getenv("COMPRESS") != "false"
 
 	log.Printf("[INFO] INIT - environment=%s, AMPQ URL=%s, exchange=%s,"+
-		"prefix=%s, compress=%t", environment, amqpURL,
-		exchange, prefix, compress)
+		"prefix=%s, compress=%t, username=%s, password=%s", environment, amqpURL,
+		exchange, prefix, compress, username, password)
 }
 
 func warn(message string, err error) {
