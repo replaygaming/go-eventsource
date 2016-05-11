@@ -12,13 +12,13 @@ type LogMonitoring struct {
 }
 
 func NewMetrics(prefix string) (LogMonitoring, error) {
-	monitor := LogMonitoring{prefix: prefix + "/"}
+	monitor := LogMonitoring{prefix: prefix}
 
 	return monitor, nil
 }
 
 func (monitor LogMonitoring) ClientCount(count int) {
-	log.Printf("[METRIC] %sconnections: %d\n", monitor.base_url, count)
+	log.Printf("[METRIC] %sconnections: %d\n", monitor.prefix, count)
 }
 
 func (monitor LogMonitoring) EventDone(event eventsource.Event, duration time.Duration, eventdurations []time.Duration) {
@@ -38,6 +38,6 @@ func (monitor LogMonitoring) EventDone(event eventsource.Event, duration time.Du
 		avg = float64(sum) / float64(count)
 	}
 
-	log.Printf("[METRIC] %s.event_distributed.clients: %d\n", monitor.base_url, count)
-	log.Printf("[METRIC] %s.event_distributed.avg_time: %dns\n", monitor.base_url, avg)
+	log.Printf("[METRIC] %s.event_distributed.clients: %d\n", monitor.prefix, count)
+	log.Printf("[METRIC] %s.event_distributed.avg_time: %dns\n", monitor.prefix, avg)
 }
