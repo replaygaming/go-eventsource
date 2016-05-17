@@ -3,6 +3,7 @@ go-eventsource
 amqp_consumer
 bin
 tmp
+secret.yaml
 
 _testmain.go
 

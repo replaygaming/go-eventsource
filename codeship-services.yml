@@ -14,3 +14,27 @@ dist:
   build:
     image: us.gcr.io/replay-gaming/go-eventsource
     dockerfile_path: Dockerfile.dist
+
+rabbitmq:
+  image: us.gcr.io/replay-gaming/rabbitmq
+
+eventsource:
+  build:
+    image: eventsource_with_wait
+    path: integration_test
+    dockerfile_path: Dockerfile
+  environment:
+    ENV: "production"
+    AMQP_URL: "amqp://guest:guest@rabbitmq:5672//"
+    EXCHANGE: "es_ex"
+  links:
+    - rabbitmq
+
+eventsource_integration_tests:
+  build:
+    image: eventsource_integration_tests
+    path: integration_test
+    dockerfile_path: Dockerfile.test_runner
+  links:
+    - rabbitmq
+    - eventsource

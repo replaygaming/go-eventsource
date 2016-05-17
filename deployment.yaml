@@ -1,0 +1,38 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: eventsource
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        component: eventsource
+    spec:
+      containers:
+      - name: eventsource
+        image: us.gcr.io/replay-gaming/go-eventsource:a5bc63c96ee1f1585510c22cda10c45c60999058
+        env:
+        - name: EVENTSOURCE_USER
+          valueFrom:
+            secretKeyRef:
+              name: eventsource
+              key: username
+        - name: EVENTSOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: eventsource
+              key: password
+        - name: "ENV"
+          value: "production"
+        - name: "AMQP_URL"
+          value: "amqp://$(EVENTSOURCE_USER):$(EVENTSOURCE_PASSWORD)@$(RABBITMQ_SERVICE_HOST):$(RABBITMQ_SERVICE_PORT)/eventsource"
+        - name: "EXCHANGE"
+          value: "es_ex"
+        ports:
+        - name: sse
+          containerPort: 80
+        resources:
+          limits:
+            cpu: "0.1"
