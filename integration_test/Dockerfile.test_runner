@@ -1,0 +1,10 @@
+FROM us.gcr.io/replay-gaming/alpine:3.3
+
+RUN apk add --update curl python
+
+ADD scripts/rabbitmqadmin /rabbitmqadmin
+ADD scripts/curl_client.sh /curl_client.sh
+ADD scripts/rabbitmq_client.sh /rabbitmq_client.sh
+ADD scripts/test_runner.sh /test_runner.sh
+
+ENTRYPOINT "/test_runner.sh"
