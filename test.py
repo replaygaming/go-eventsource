@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Creates, writes, and reads a labeled custom metric.
+"""Creates, writes, and reads a  labeled custom metric.
 
 This is an example of how to use the Google Cloud Monitoring API to create,
 write, and read a labeled custom metric.
