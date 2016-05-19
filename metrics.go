@@ -8,7 +8,7 @@ import (
 )
 
 type LogMonitoring struct {
-	prefix string
+	prefix      string
 	connections int
 }
 
