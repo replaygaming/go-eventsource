@@ -92,7 +92,12 @@ func messageLoop(messages <-chan amqp.Delivery, server *eventsource.Eventsource,
 	consumer.Done <- nil
 }
 
+func heartbeat(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+}
+
 func startServing(server *eventsource.Eventsource) {
+	http.HandleFunc("/", heartbeat)
 	http.Handle("/subscribe", server)
 
 	log.Printf("[INFO] STARTING - environment=%s, AMPQ URL=%s, exchange=%s,"+
