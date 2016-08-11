@@ -9,23 +9,12 @@ import (
 	"time"
 )
 
-func TestNewConsumer(t *testing.T) {
-	c, err := consumer.NewConsumer("test-topic", "test-subscription")
-	if err != nil {
-		t.Error("Got error")
-	}
-
-	if c.Subscription == nil {
-		t.Error("Subscription not created!")
-	}
-}
-
 func TestConsume(t *testing.T) {
 	pubsubClient, _ := pubsub.NewClient(context.Background(), "emulator-project-id")
 	topic := pubsubClient.Topic("test-topic")
 
-	c, _ := consumer.NewConsumer("test-topic", "test-subscription")
-	messagesChannel, _ := consumer.Consume(c)
+	c := consumer.NewConsumer("test-topic", "test-subscription")
+	messagesChannel, _ := c.Consume()
 
 	// Send two messages
 	topic.Publish(context.Background(), &pubsub.Message{
@@ -65,6 +54,24 @@ func TestConsume(t *testing.T) {
 		if !inArray(receivedMsg, expected) {
 			t.Errorf("Expected %v to be included in %v", received, expected)
 		}
+	}
+}
+
+func TestRemove(t *testing.T) {
+	pubsubClient, _ := pubsub.NewClient(context.Background(), "emulator-project-id")
+	topic := pubsubClient.Topic("test-topic")
+
+	c := consumer.NewConsumer("test-topic", "test-subscription")
+	c.Remove()
+
+	subscriptionExists, _ := c.Subscription.Exists(context.Background())
+	if subscriptionExists {
+		t.Error("Expected subscription to be removed")
+	}
+
+	topicExists, _ := topic.Exists(context.Background())
+	if !topicExists {
+		t.Error("Expected topic to not be removed")
 	}
 }
 

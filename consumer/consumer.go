@@ -10,71 +10,67 @@ type Consumer struct {
 	Subscription *pubsub.Subscription
 }
 
-func NewConsumer(topicName string, subscriptionName string) (*Consumer, error) {
-	pubsubClient, err := pubsub.NewClient(context.Background(), "emulator-project-id")
+const projectId = "emulator-project-id"
+
+func NewConsumer(topicName string, subscriptionName string) *Consumer {
+	pubsubClient, err := pubsub.NewClient(context.Background(), projectId)
 	if err != nil {
 		log.Fatalf("[FATAL] Could not create PubSub client: %v", err)
-		return nil, err
 	}
 
-	topic, err := ensureTopic(pubsubClient, topicName)
-	if err != nil {
-		log.Fatalf("[FATAL] Could not use topic: %v", err)
-		return nil, err
-	}
+	log.Printf("Using Google PubSub with project id: %s", projectId)
 
-	sub, err := ensureSubscription(pubsubClient, topic, subscriptionName)
-	if err != nil {
-		log.Fatalf("[FATAL] Could not use subscription: %v", err)
-		return nil, err
-	}
+	topic := ensureTopic(pubsubClient, topicName)
+	sub := ensureSubscription(pubsubClient, topic, subscriptionName)
 
-	return &Consumer{Subscription: sub}, nil
+	return &Consumer{Subscription: sub}
 }
 
-func ensureTopic(pubsubClient *pubsub.Client, topicName string) (*pubsub.Topic, error) {
+func ensureTopic(pubsubClient *pubsub.Client, topicName string) *pubsub.Topic {
 	var topic *pubsub.Topic
 	topic = pubsubClient.Topic(topicName)
 	topicExists, err := topic.Exists(context.Background())
 	if err != nil {
 		log.Fatalf("[FATAL] Could not verify PubSub topic existence: %v", err)
-		return nil, err
 	}
 
 	if !topicExists {
+		log.Println("[INFO] Creating new topic")
 		new_topic, err := pubsubClient.NewTopic(context.Background(), topicName)
 		if err != nil {
 			log.Fatalf("[FATAL] Could not create PubSub topic: %v", err)
-			return nil, err
 		}
 		topic = new_topic
+	} else {
+		log.Println("[INFO] Using existing topic")
 	}
 
-	return topic, nil
+	return topic
 }
 
-func ensureSubscription(pubsubClient *pubsub.Client, topic *pubsub.Topic, subscriptionName string) (*pubsub.Subscription, error) {
+func ensureSubscription(pubsubClient *pubsub.Client, topic *pubsub.Topic, subscriptionName string) *pubsub.Subscription {
 	var subscription *pubsub.Subscription
 	subscription = pubsubClient.Subscription(subscriptionName)
 	subscriptionExists, err := subscription.Exists(context.Background())
 	if err != nil {
 		log.Fatalf("[FATAL] Could not verify PubSub subscription existence: %v", err)
-		return nil, err
 	}
 
 	if !subscriptionExists {
+		log.Println("[INFO] Creating new subscription")
 		new_subscription, err := pubsubClient.NewSubscription(context.Background(), subscriptionName, topic, 0, nil)
 		if err != nil {
 			log.Fatalf("[FATAL] Could not create PubSub subscription: %v", err)
-			return nil, err
 		}
 		subscription = new_subscription
+	} else {
+		log.Println("[INFO] Using existing subscription")
 	}
 
-	return subscription, nil
+	return subscription
 }
 
-func Consume(consumer *Consumer) (chan *pubsub.Message, error) {
+func (consumer *Consumer) Consume() (chan *pubsub.Message, error) {
 	// Construct the iterator
 
 	channel := make(chan *pubsub.Message)
@@ -82,7 +78,7 @@ func Consume(consumer *Consumer) (chan *pubsub.Message, error) {
 	go func() {
 		it, err := consumer.Subscription.Pull(context.Background())
 		if err != nil {
-			log.Fatalf("[FATAL] Could not pull message from subscription: %v", err)
+			log.Printf("Could not pull message from subscription: %v", err)
 			return
 		}
 		defer it.Stop()
@@ -90,19 +86,24 @@ func Consume(consumer *Consumer) (chan *pubsub.Message, error) {
 		for {
 			msg, err := it.Next()
 			if err == pubsub.Done {
-				log.Print("[DEBUG] No more messages")
+				log.Println("[DEBUG] No more messages")
 				break
 			}
 			if err != nil {
 				// handle err ...
-				log.Fatalf("[FATAL] Error consuming messages: %v", err)
+				log.Printf("[ERROR] Error consuming messages: %v", err)
 				break
 			}
 
-			log.Print("got message: ", string(msg.Data))
+			log.Printf("[DEBUG] Got message: ", string(msg.Data))
 			channel <- msg
 		}
 	}()
 
 	return channel, nil
+}
+
+func (consumer *Consumer) Remove() {
+	log.Printf("[INFO] Removing subscription %s", consumer.Subscription.Name())
+	consumer.Subscription.Delete(context.Background())
 }
