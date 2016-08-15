@@ -1,17 +1,19 @@
 - service: compile
+  name: Compile
   command: cp /go/src/github.com/replaygaming/go-eventsource/go-eventsource /artifacts
   cached: true
   dockercfg_service: gcr_dockercfg
 
 - service: dist
+  name: Distribute
   command: true
 
-- name: integration_test
+- name: Integration Test
   service: eventsource_integration_tests
   command: test_runner.sh
   dockercfg_service: gcr_dockercfg
 
-- name: deployment
+- name: Push images
   service: dist
   type: parallel
   steps:
