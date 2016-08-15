@@ -10,6 +10,23 @@ type Consumer struct {
 	Subscription *pubsub.Subscription
 }
 
+type Message interface {
+	Data() []byte
+	Done(ack bool)
+}
+
+type GooglePubSubMessage struct {
+	OriginalMessage *pubsub.Message
+}
+
+func (m *GooglePubSubMessage) Data() []byte {
+	return m.OriginalMessage.Data
+}
+
+func (m *GooglePubSubMessage) Done(ack bool) {
+	m.OriginalMessage.Done(ack)
+}
+
 const projectId = "emulator-project-id"
 
 func NewConsumer(topicName string, subscriptionName string) *Consumer {
@@ -70,10 +87,10 @@ func ensureSubscription(pubsubClient *pubsub.Client, topic *pubsub.Topic, subscr
 	return subscription
 }
 
-func (consumer *Consumer) Consume() (chan *pubsub.Message, error) {
+func (consumer *Consumer) Consume() (chan Message, error) {
 	// Construct the iterator
 
-	channel := make(chan *pubsub.Message)
+	channel := make(chan Message)
 
 	go func() {
 		it, err := consumer.Subscription.Pull(context.Background())
@@ -86,7 +103,6 @@ func (consumer *Consumer) Consume() (chan *pubsub.Message, error) {
 		for {
 			msg, err := it.Next()
 			if err == pubsub.Done {
-				log.Println("[DEBUG] No more messages")
 				break
 			}
 			if err != nil {
@@ -95,8 +111,9 @@ func (consumer *Consumer) Consume() (chan *pubsub.Message, error) {
 				break
 			}
 
-			log.Printf("[DEBUG] Got message: ", string(msg.Data))
-			channel <- msg
+			wrappedMsg := &GooglePubSubMessage{OriginalMessage: msg}
+
+			channel <- wrappedMsg
 		}
 	}()
 

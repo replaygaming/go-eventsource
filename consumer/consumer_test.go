@@ -29,7 +29,7 @@ func TestConsume(t *testing.T) {
 
 	go func() {
 		for m := range messagesChannel {
-			receivedChannel <- m.Data
+			receivedChannel <- m.Data()
 			m.Done(true)
 		}
 	}()
