@@ -1,38 +1,46 @@
 package main
 
 import (
+	"encoding/hex"
+	"flag"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/replaygaming/eventsource"
-	amqp "github.com/streadway/amqp"
+	"github.com/replaygaming/go-eventsource/consumer"
 )
 
 var (
-	environment string
-	amqpURL     string
-	exchange    string
-	prefix      string
-	username    string
-	password    string
-	compress    bool
+	topicName = flag.String("topic",
+		fromEnvWithDefault("ES_TOPIC", "eventsource"),
+		"Topic name")
+
+	subscriptionName = flag.String("subscription",
+		fromEnvWithDefault("ES_SUBSCRIPTION", "eventsource_"+generateSubId()),
+		"Subscription name")
+
+	port = flag.String("port",
+		fromEnvWithDefault("ES_PORT", "3001"),
+		"Eventsource port")
+
+	useMetrics = flag.Bool("metrics", os.Getenv("ES_METRICS") == "true", "Enable metrics")
+
+	metricsPrefix = flag.String("metrics-prefix",
+		fromEnvWithDefault("ES_METRICS_PREFIX", "eventsource"),
+		"Metrics prefix")
+
+	compress = flag.Bool("compression", os.Getenv("ES_COMPRESSION") == "true", "Enable zlib compression of data")
+
+	verbose = flag.Bool("verbose", false, "Enable verbose output")
 )
 
 func init() {
-	log.Printf("[INFO] Starting")
-
-	environment = os.Getenv("ENV")
-	amqpURL = os.Getenv("AMQP_URL")
-	exchange = os.Getenv("EXCHANGE")
-	prefix = "eventsource"
-	username = os.Getenv("EVENTSOURCE_USER")
-	password = os.Getenv("EVENTSOURCE_PASSWORD")
-	compress = os.Getenv("COMPRESS") != "false"
-
-	log.Printf("[INFO] INIT - environment=%s, AMPQ URL=%s, exchange=%s,"+
-		"prefix=%s, compress=%t, username=%s, password=%s", environment, amqpURL,
-		exchange, prefix, compress, username, password)
+	flag.Parse()
 }
 
 func warn(message string, err error) {
@@ -43,53 +51,53 @@ func fatal(message string, err error) {
 	log.Fatalf("[FATAL] %s: %s", message, err)
 }
 
-func newServerWithMetrics(prefix string) *eventsource.Eventsource {
+func newServerWithMetrics() *eventsource.Eventsource {
 	server := &eventsource.Eventsource{
 		ChannelSubscriber: eventsource.QueryStringChannels{Name: "channels"},
 	}
-	metrics, err := NewMetrics(prefix)
-	if err != nil {
-		warn("Metrics proxy creation failed", err)
-	} else if environment == "production" {
+
+	if *useMetrics {
+		metrics, err := NewMetrics(*metricsPrefix)
+		if err != nil {
+			fatal("Could not instantiate metrics", err)
+		}
 		server.Metrics = metrics
 	}
 	server.Start()
 	return server
 }
 
-func newConsumer(amqpURL string, exchange string) *Consumer {
-	// NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (*Consumer, error)
-	consumer, err := NewConsumer(amqpURL, exchange, "fanout", "", "", "eventsource")
-	if err != nil {
-		fatal("AMQP consumer failed", err)
-	}
-	return consumer
+func newConsumer() *consumer.Consumer {
+	return consumer.NewConsumer(*topicName, *subscriptionName)
 }
 
-func consume(consumer *Consumer) <-chan amqp.Delivery {
-	messages, err := consumer.Consume()
+func consume(c *consumer.Consumer) <-chan consumer.Message {
+	messages, err := c.Consume()
 	if err != nil {
-		fatal("AMQP queue failed", err)
+		fatal("Failed to consume messages", err)
 	}
 	return messages
 }
 
-func messageLoop(messages <-chan amqp.Delivery, server *eventsource.Eventsource, consumer *Consumer) {
-	for message := range messages {
-		data, channels, err := parseMessage(message.Body)
+func messageLoop(messages <-chan consumer.Message, server *eventsource.Eventsource, c *consumer.Consumer) {
+	for m := range messages {
+		messageData := m.Data()
+		if *verbose {
+			log.Printf("[DEBUG] Got message: ", string(messageData))
+		}
+		data, channels, err := parseMessage(messageData)
 		if err != nil {
-			warn("JSON conversion failed", err)
+			log.Printf("[WARN] json conversion failed %s", err)
 		} else {
-			event := eventsource.DefaultEvent{
+			e := eventsource.DefaultEvent{
 				Message:  data,
 				Channels: channels,
-				Compress: compress,
+				Compress: *compress,
 			}
-			server.Send(event)
+			server.Send(e)
 		}
-		message.Ack(false)
+		m.Done(true)
 	}
-	consumer.Done <- nil
 }
 
 func heartbeat(w http.ResponseWriter, r *http.Request) {
@@ -100,21 +108,72 @@ func startServing(server *eventsource.Eventsource) {
 	http.HandleFunc("/", heartbeat)
 	http.Handle("/subscribe", server)
 
-	log.Printf("[INFO] STARTING - environment=%s, AMPQ URL=%s, exchange=%s,"+
-		" stats prefix=%s, compression=%t", environment, amqpURL,
-		exchange, prefix, compress)
-	err := http.ListenAndServe(":80", nil)
+	log.Println("[INFO] EventSource server started")
+	log.Printf("Configuration: port=%s subscription=%s topic=%s"+
+		" compression=%t metrics=%t", *port, *subscriptionName,
+		*topicName, *compress, *useMetrics)
+	if *useMetrics {
+		log.Printf("Metrics configuration: metrics-prefix=%s", *metricsPrefix)
+	}
+	err := http.ListenAndServe(":"+*port, nil)
 	if err != nil {
 		fatal("Server", err)
 	}
 }
 
 func main() {
-	server := newServerWithMetrics(prefix)
-	consumer := newConsumer(amqpURL, exchange)
-	messages := consume(consumer)
+	server := newServerWithMetrics()
+	c := newConsumer()
+	messages := consume(c)
 
-	go messageLoop(messages, server, consumer)
+	setupSignalHandlers(c)
+
+	go messageLoop(messages, server, c)
 
 	startServing(server)
+}
+
+var shuttingDown = false
+
+func setupSignalHandlers(consumer *consumer.Consumer) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		if shuttingDown {
+			os.Exit(1)
+		}
+		log.Printf("[INFO] Shutting down gracefully. Repeat signal to force shutdown")
+		shuttingDown = true
+		consumer.Remove()
+		os.Exit(0)
+	}()
+}
+
+func generateSubId() string {
+	id := make([]byte, 4)
+	todo := len(id)
+	offset := 0
+	source := rand.NewSource(time.Now().UnixNano())
+	for {
+		val := int64(source.Int63())
+		for i := 0; i < 8; i++ {
+			id[offset] = byte(val & 0xff)
+			todo--
+			if todo == 0 {
+				return hex.EncodeToString(id)
+			}
+			offset++
+			val >>= 8
+		}
+	}
+}
+
+func fromEnvWithDefault(varName string, defaultValue string) string {
+	value := os.Getenv(varName)
+	if value != "" {
+		return value
+	} else {
+		return defaultValue
+	}
 }
