@@ -1,7 +1,6 @@
-package consumer
+package main
 
 import (
-	"github.com/replaygaming/go-eventsource/consumer"
 	"golang.org/x/net/context"
 	"google.golang.org/cloud/pubsub"
 	"reflect"
@@ -13,7 +12,7 @@ func TestConsume(t *testing.T) {
 	pubsubClient, _ := pubsub.NewClient(context.Background(), "emulator-project-id")
 	topic := pubsubClient.Topic("test-topic")
 
-	c := consumer.NewConsumer("test-topic", "test-subscription")
+	c := NewConsumer("test-topic", "test-subscription")
 	messagesChannel, _ := c.Consume()
 
 	// Send two messages
@@ -61,7 +60,7 @@ func TestRemove(t *testing.T) {
 	pubsubClient, _ := pubsub.NewClient(context.Background(), "emulator-project-id")
 	topic := pubsubClient.Topic("test-topic")
 
-	c := consumer.NewConsumer("test-topic", "test-subscription")
+	c := NewConsumer("test-topic", "test-subscription")
 	c.Remove()
 
 	subscriptionExists, _ := c.Subscription.Exists(context.Background())

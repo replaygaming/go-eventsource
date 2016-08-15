@@ -1,9 +1,10 @@
-package consumer
+package main
 
 import (
 	"golang.org/x/net/context"
 	"google.golang.org/cloud/pubsub"
 	"log"
+	"os"
 )
 
 type Consumer struct {
@@ -15,21 +16,26 @@ type Message interface {
 	Done(ack bool)
 }
 
-type GooglePubSubMessage struct {
+type googlePubSubMessage struct {
 	OriginalMessage *pubsub.Message
 }
 
-func (m *GooglePubSubMessage) Data() []byte {
+func (m *googlePubSubMessage) Data() []byte {
 	return m.OriginalMessage.Data
 }
 
-func (m *GooglePubSubMessage) Done(ack bool) {
+func (m *googlePubSubMessage) Done(ack bool) {
 	m.OriginalMessage.Done(ack)
 }
 
-const projectId = "emulator-project-id"
+var defaultProjectId = "emulator-project-id"
 
 func NewConsumer(topicName string, subscriptionName string) *Consumer {
+	projectId := os.Getenv("ES_GOOGLE_PROJECT_ID")
+	if projectId == "" {
+		projectId = defaultProjectId
+	}
+
 	pubsubClient, err := pubsub.NewClient(context.Background(), projectId)
 	if err != nil {
 		log.Fatalf("[FATAL] Could not create PubSub client: %v", err)
@@ -111,7 +117,7 @@ func (consumer *Consumer) Consume() (chan Message, error) {
 				break
 			}
 
-			wrappedMsg := &GooglePubSubMessage{OriginalMessage: msg}
+			wrappedMsg := &googlePubSubMessage{OriginalMessage: msg}
 
 			channel <- wrappedMsg
 		}

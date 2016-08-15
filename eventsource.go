@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/replaygaming/eventsource"
-	"github.com/replaygaming/go-eventsource/consumer"
 )
 
 var (
@@ -67,11 +66,11 @@ func newServerWithMetrics() *eventsource.Eventsource {
 	return server
 }
 
-func newConsumer() *consumer.Consumer {
-	return consumer.NewConsumer(*topicName, *subscriptionName)
+func newConsumer() *Consumer {
+	return NewConsumer(*topicName, *subscriptionName)
 }
 
-func consume(c *consumer.Consumer) <-chan consumer.Message {
+func consume(c *Consumer) <-chan Message {
 	messages, err := c.Consume()
 	if err != nil {
 		fatal("Failed to consume messages", err)
@@ -79,7 +78,7 @@ func consume(c *consumer.Consumer) <-chan consumer.Message {
 	return messages
 }
 
-func messageLoop(messages <-chan consumer.Message, server *eventsource.Eventsource, c *consumer.Consumer) {
+func messageLoop(messages <-chan Message, server *eventsource.Eventsource, c *Consumer) {
 	for m := range messages {
 		messageData := m.Data()
 		if *verbose {
@@ -135,7 +134,7 @@ func main() {
 
 var shuttingDown = false
 
-func setupSignalHandlers(consumer *consumer.Consumer) {
+func setupSignalHandlers(consumer *Consumer) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
