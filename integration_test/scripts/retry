@@ -1,0 +1,30 @@
+#!/bin/bash
+
+: ${PUBSUB_EMULATOR_HOST:=pubsub_emulator:8642}
+
+export PUBSUB_EMULATOR_HOST
+
+echo "Using PUBSUB_EMULATOR_HOST: $PUBSUB_EMULATOR_HOST"
+
+attempts=5
+emulator_up=1
+while [[ $emulator_up -ne 0 ]] && [[ $attempts -gt 0 ]]; do
+  printf "Checking if emulator is up..."
+
+  $(nc -w 5 -z ${PUBSUB_EMULATOR_HOST/:/ } 2>/dev/null)
+  emulator_up=$?
+  attempts=$((attempts - 1))
+
+  if [[ $emulator_up -eq 0 ]]; then
+    printf "OK\n"
+  elif [[ $attempts -eq 0 ]]; then
+    printf "\nEmulator host took too long to start. Exiting"
+    exit 1
+  else
+    printf "FAIL\n"
+    echo "Trying again in 5 seconds"
+    sleep 5
+  fi
+done
+
+exec /go-eventsource

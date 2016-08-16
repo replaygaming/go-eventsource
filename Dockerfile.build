@@ -1,13 +1,15 @@
-FROM alpine:3.2
+FROM us.gcr.io/replay-gaming/alpine:3.3
 
 ENV GOPATH=/go
 RUN mkdir -p /go/src/github.com/replaygaming/go-eventsource
 WORKDIR /go/src/github.com/replaygaming/go-eventsource
 
-RUN apk add --update go
-RUN apk add --update git
+RUN apk add --no-cache -U go git
 
 ADD *.go /go/src/github.com/replaygaming/go-eventsource/
 
 RUN go get
-RUN go build
+RUN go build -tags netgo
+
+ADD client/*.go /go/src/github.com/replaygaming/go-eventsource/client/
+RUN cd client && go build -tags netgo

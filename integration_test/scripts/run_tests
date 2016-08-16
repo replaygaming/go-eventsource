@@ -1,0 +1,71 @@
+#!/bin/bash
+
+: ${ES_HOST:=eventsource}
+
+echo "Using ES_HOST: $ES_HOST"
+
+attempts=5
+es_up=1
+while [[ $es_up -ne 0 ]] && [[ $attempts -gt 0 ]]; do
+  printf "Checking if es is up..."
+
+  $(curl -m 3 -s http://${ES_HOST})
+  es_up=$?
+  attempts=$((attempts - 1))
+
+  if [[ $es_up -eq 0 ]]; then
+    printf "OK\n"
+  elif [[ $attempts -eq 0 ]]; then
+    printf "\nEventsource took too long to start. Exiting"
+    exit 1
+  else
+    printf "FAIL\n"
+    echo "Trying again in 5 seconds"
+    sleep 5
+  fi
+done
+
+echo "Starting test"
+
+echo "Spawning a couple of curl clients with different settings"
+./curl_client.sh 100 &
+./curl_client.sh 200 &
+./curl_client.sh 300 &
+
+sleep 1
+
+echo "Sending some messages to EventSource"
+# Note that curl is a bit finicky with how it flushes data to the result files.
+# If the sent test data isn't just over a flush limit some data will be missing
+# from the result files even if it has been sent by eventsource and recived by
+# curl. So take care if/when modifying this payload.
+./client "test" "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+./client "test" "Duis consectetur eros sit amet justo condimentum, quis pellentesque enim rutrum."
+./client "test" "Donec tempor blandit orci, vel facilisis libero."
+./client "test" "Integer porta nulla quis fermentum semper."
+./client "test" "Curabitur tempus feugiat fermentum."
+./client "test" "Mauris leo urna, maximus sed diam eu, tristique tincidunt dolor."
+./client "test" "Donec elementum purus in est elementum, vitae dignissim ligula dictum."
+./client "test" "Donec nec mauris vitae lectus feugiat vestibulum eu ultrices lacus."
+./client "test" "Mauris a velit vitae nunc ullamcorper fringilla."
+
+sleep 10
+
+expected_count=9
+
+echo "Verifying the output"
+for file in result*; do
+  echo "  Verifying $file:"
+  echo "*********************"
+  cat $file
+  echo "*********************"
+  count=$(grep -c "data" $file)
+  if [[ $count -eq $expected_count ]]; then
+    echo "    Found $expected_count recived messages."
+  else
+    echo "    Missing messages! Only $count of $expected_count found."
+    exit 1
+  fi
+  echo "  File good."
+done
+echo "All good."

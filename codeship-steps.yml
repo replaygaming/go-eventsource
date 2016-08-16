@@ -1,6 +1,6 @@
 - service: compile
   name: Compile
-  command: cp /go/src/github.com/replaygaming/go-eventsource/go-eventsource /artifacts
+  command: cp /go/src/github.com/replaygaming/go-eventsource/go-eventsource /go/src/github.com/replaygaming/go-eventsource/client/client /artifacts
   cached: true
   dockercfg_service: gcr_dockercfg
 
@@ -10,7 +10,7 @@
 
 - name: Integration Test
   service: eventsource_integration_tests
-  command: test_runner.sh
+  command: /run_tests
   dockercfg_service: gcr_dockercfg
 
 - name: Push images

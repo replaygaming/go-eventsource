@@ -1,10 +1,9 @@
 FROM us.gcr.io/replay-gaming/alpine:3.3
 
-RUN apk add --update curl python
+RUN apk add -U --no-cache curl netcat-openbsd bash
 
-ADD scripts/rabbitmqadmin /rabbitmqadmin
-ADD scripts/curl_client.sh /curl_client.sh
-ADD scripts/rabbitmq_client.sh /rabbitmq_client.sh
-ADD scripts/test_runner.sh /test_runner.sh
+ADD ./integration_test/scripts/curl_client.sh /curl_client.sh
+ADD ./integration_test/scripts/run_tests /run_tests
+ADD ./tmp/client /client
 
-ENTRYPOINT "/test_runner.sh"
+CMD /run_tests

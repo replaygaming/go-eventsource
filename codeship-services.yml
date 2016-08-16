@@ -15,26 +15,30 @@ dist:
     image: us.gcr.io/replay-gaming/go-eventsource
     dockerfile_path: Dockerfile.dist
 
-rabbitmq:
-  image: us.gcr.io/replay-gaming/rabbitmq
+emulator:
+  image: us.gcr.io/replay-gaming/pubsub_emulator
 
 eventsource:
+  depends_on:
+    - emulator
   build:
     image: eventsource_with_wait
     path: integration_test
     dockerfile_path: Dockerfile
   environment:
-    ENV: "production"
-    AMQP_URL: "amqp://guest:guest@rabbitmq:5672//"
-    EXCHANGE: "es_ex"
+    PUBSUB_EMULATOR_HOST: emulator:8642
   links:
-    - rabbitmq
+    - emulator
 
 eventsource_integration_tests:
+  depends_on:
+    - emulator
+    - eventsource
   build:
     image: eventsource_integration_tests
-    path: integration_test
-    dockerfile_path: Dockerfile.test_runner
+    dockerfile_path: integration_test/Dockerfile.test_runner
+  environment:
+    PUBSUB_EMULATOR_HOST: emulator:8642
   links:
-    - rabbitmq
+    - emulator
     - eventsource
