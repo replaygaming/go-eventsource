@@ -23,7 +23,7 @@ var (
 		"Subscription name")
 
 	port = flag.String("port",
-		fromEnvWithDefault("ES_PORT", "3001"),
+		fromEnvWithDefault("ES_PORT", "80"),
 		"Eventsource port")
 
 	useMetrics = flag.Bool("metrics", os.Getenv("ES_METRICS") == "true", "Enable metrics")

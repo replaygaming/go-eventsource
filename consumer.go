@@ -55,7 +55,7 @@ func ensureTopic(pubsubClient *pubsub.Client, topicName string) *pubsub.Topic {
 	topic = pubsubClient.Topic(topicName)
 	topicExists, err := topic.Exists(context.Background())
 	if err != nil {
-		Fatal("Could not verify PubSub topic existence: %v", err)
+		Warn("Could not verify PubSub topic existence: %v", err)
 	}
 
 	if !topicExists {
@@ -78,7 +78,7 @@ func ensureSubscription(pubsubClient *pubsub.Client, topic *pubsub.Topic, subscr
 	subscription = pubsubClient.Subscription(subscriptionName)
 	subscriptionExists, err := subscription.Exists(context.Background())
 	if err != nil {
-		Fatal("Could not verify PubSub subscription existence: %v", err)
+		Warn("Could not verify PubSub subscription existence: %v", err)
 	}
 
 	if !subscriptionExists {
