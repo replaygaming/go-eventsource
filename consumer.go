@@ -29,6 +29,7 @@ func (m *googlePubSubMessage) Done(ack bool) {
 
 var defaultProjectId = "emulator-project-id"
 
+// Creates a new consumer
 func NewConsumer(topicName string, subscriptionName string) *Consumer {
 	projectId := os.Getenv("ES_GOOGLE_PROJECT_ID")
 	if projectId == "" {
@@ -48,6 +49,7 @@ func NewConsumer(topicName string, subscriptionName string) *Consumer {
 	return &Consumer{Subscription: sub}
 }
 
+// Finds or creates a topic
 func ensureTopic(pubsubClient *pubsub.Client, topicName string) *pubsub.Topic {
 	var topic *pubsub.Topic
 	topic = pubsubClient.Topic(topicName)
@@ -70,6 +72,7 @@ func ensureTopic(pubsubClient *pubsub.Client, topicName string) *pubsub.Topic {
 	return topic
 }
 
+// Finds or creates a subscription
 func ensureSubscription(pubsubClient *pubsub.Client, topic *pubsub.Topic, subscriptionName string) *pubsub.Subscription {
 	var subscription *pubsub.Subscription
 	subscription = pubsubClient.Subscription(subscriptionName)
@@ -92,6 +95,7 @@ func ensureSubscription(pubsubClient *pubsub.Client, topic *pubsub.Topic, subscr
 	return subscription
 }
 
+// Creates a channel that pulls messages from the subscription
 func (consumer *Consumer) Consume() (chan Message, error) {
 	channel := make(chan Message)
 
@@ -122,6 +126,7 @@ func (consumer *Consumer) Consume() (chan Message, error) {
 	return channel, nil
 }
 
+// Remove the subscription
 func (consumer *Consumer) Remove() {
 	Info("Removing subscription %s", consumer.Subscription.Name())
 	consumer.Subscription.Delete(context.Background())

@@ -41,6 +41,7 @@ func init() {
 	flag.Parse()
 }
 
+// Create a new eventsource server, optionally with metrics
 func newServerWithMetrics() *eventsource.Eventsource {
 	server := &eventsource.Eventsource{
 		ChannelSubscriber: eventsource.QueryStringChannels{Name: "channels"},
@@ -57,10 +58,12 @@ func newServerWithMetrics() *eventsource.Eventsource {
 	return server
 }
 
+// Create new message consumer
 func newConsumer() *Consumer {
 	return NewConsumer(*topicName, *subscriptionName)
 }
 
+// Create the channel that we'll receive messages
 func consume(c *Consumer) <-chan Message {
 	messages, err := c.Consume()
 	if err != nil {
@@ -69,6 +72,7 @@ func consume(c *Consumer) <-chan Message {
 	return messages
 }
 
+// Pulls out messages from the channel
 func messageLoop(messages <-chan Message, server *eventsource.Eventsource, c *Consumer) {
 	for m := range messages {
 		messageData := m.Data()
@@ -90,10 +94,12 @@ func messageLoop(messages <-chan Message, server *eventsource.Eventsource, c *Co
 	}
 }
 
+// Handle GET /
 func heartbeat(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
+// Start HTTP server
 func startServing(server *eventsource.Eventsource) {
 	http.HandleFunc("/", heartbeat)
 	http.Handle("/subscribe", server)
@@ -125,6 +131,7 @@ func main() {
 
 var shuttingDown = false
 
+// Catch signals to perform a graceful shutdown
 func setupSignalHandlers(consumer *Consumer) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -140,6 +147,7 @@ func setupSignalHandlers(consumer *Consumer) {
 	}()
 }
 
+// Generates a random hexadecimal string
 func generateSubId() string {
 	id := make([]byte, 4)
 	todo := len(id)
@@ -159,6 +167,7 @@ func generateSubId() string {
 	}
 }
 
+// Attempts to get a value from the environment with a default
 func fromEnvWithDefault(varName string, defaultValue string) string {
 	value := os.Getenv(varName)
 	if value != "" {
