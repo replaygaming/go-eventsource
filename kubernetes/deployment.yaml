@@ -1,0 +1,36 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: eventsource
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        component: eventsource
+    spec:
+      containers:
+      - name: eventsource
+        image: us.gcr.io/replay-gaming/go-eventsource:latest
+        env:
+        - name: ES_PUBSUB_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: pubsub
+              key: project-id
+        - name: ES_PUBSUB_KEYFILE
+          value: /etc/pubsub/keyfile.json
+        volumeMounts:
+          - name: pubsub-secret
+            mountPath: /etc/pubsub
+        ports:
+        - name: sse
+          containerPort: 80
+        resources:
+          limits:
+            cpu: "0.1"
+      volumes:
+        - name: pubsub-secret
+          secret:
+            secretName: pubsub

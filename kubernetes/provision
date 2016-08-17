@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+ACCOUNT_NAME = ENV["GCLOUD_ACCOUNT_NAME"] || "pubsub-prod"
+PROJECT_ID = ENV["GCLOUD_PROJECT_ID"] || "replay-gaming"
+
+require "tmpdir"
+
+class Provision
+  class << self
+
+    def call
+      email = ensure_service_account
+      ensure_secret(email)
+      ensure_deployment
+      say "EventSource provisioned successfully"
+    end
+
+    def ensure_service_account
+      email = service_account_email
+
+      unless email
+        say "Creating service account #{ACCOUNT_NAME}"
+        result = %x[gcloud iam service-accounts create #{ACCOUNT_NAME} --display-name "#{ACCOUNT_NAME}"]
+        email = result.lines.find { |l| l =~ /email/ }[/email: (.*)/, 1].strip.chomp
+      end
+
+      email
+    end
+
+    def ensure_secret(email)
+      return if Kernel.system(*%W[kubectl get secret/pubsub -o name], err: :out, out: "/dev/null")
+
+      say "Creating pubsub secret"
+      Dir.mktmpdir do |dir|
+        location = File.join(dir, "keyfile.json")
+        create_keyfile(email, location)
+        Kernel.system(*%W[kubectl create secret generic pubsub --from-file=keyfile.json=#{location} --from-literal=project-id=#{PROJECT_ID}], out: "/dev/null")
+      end
+    end
+
+    def ensure_deployment
+      deployment_file = File.join(File.expand_path("..", __FILE__), "deployment.yaml")
+      Kernel.system(*%W[kubectl apply -f #{deployment_file}], out: "/dev/null")
+    end
+
+    def create_keyfile(email, keyfile_path)
+      %x[gcloud iam service-accounts keys create #{keyfile_path} --iam-account "#{email}"]
+    end
+
+    def service_account_email
+      result = %x[gcloud iam service-accounts list]
+      line = result.lines.find { |l| l =~ /#{ACCOUNT_NAME}/ }
+      line ? line.strip.split(" ").last.strip.chomp : nil
+    end
+
+    def say(message)
+      puts message
+    end
+  end
+end
+
+Provision.call
