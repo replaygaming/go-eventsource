@@ -22,6 +22,10 @@ class Provision
         say "Creating service account #{ACCOUNT_NAME}"
         result = %x[gcloud iam service-accounts create #{ACCOUNT_NAME} --display-name "#{ACCOUNT_NAME}"]
         email = result.lines.find { |l| l =~ /email/ }[/email: (.*)/, 1].strip.chomp
+        say "Granting service account permissions of PubSub/Editor"
+        Kernel.system(*(%W[gcloud projects add-iam-policy-binding #{PROJECT_ID}] +
+                      %W[--role roles/pubsub.editor] +
+                      %W[--member "serviceAccount:#{email}"]))
       end
 
       email

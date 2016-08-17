@@ -23,6 +23,7 @@ spec:
           value: /etc/pubsub/keyfile.json
         volumeMounts:
           - name: pubsub-secret
+            readOnly: true
             mountPath: /etc/pubsub
         ports:
         - name: sse
