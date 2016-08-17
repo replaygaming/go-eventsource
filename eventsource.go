@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/hex"
 	"flag"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -35,19 +34,11 @@ var (
 
 	compress = flag.Bool("compression", os.Getenv("ES_COMPRESSION") == "true", "Enable zlib compression of data")
 
-	verbose = flag.Bool("verbose", false, "Enable verbose output")
+	verbose = flag.Bool("verbose", os.Getenv("ES_VERBOSE") == "true", "Enable verbose output")
 )
 
 func init() {
 	flag.Parse()
-}
-
-func warn(message string, err error) {
-	log.Printf("[WARN] %s: %s", message, err)
-}
-
-func fatal(message string, err error) {
-	log.Fatalf("[FATAL] %s: %s", message, err)
 }
 
 func newServerWithMetrics() *eventsource.Eventsource {
@@ -58,7 +49,7 @@ func newServerWithMetrics() *eventsource.Eventsource {
 	if *useMetrics {
 		metrics, err := NewMetrics(*metricsPrefix)
 		if err != nil {
-			fatal("Could not instantiate metrics", err)
+			Fatal("Could not instantiate metrics", err)
 		}
 		server.Metrics = metrics
 	}
@@ -73,7 +64,7 @@ func newConsumer() *Consumer {
 func consume(c *Consumer) <-chan Message {
 	messages, err := c.Consume()
 	if err != nil {
-		fatal("Failed to consume messages", err)
+		Fatal("Failed to consume messages", err)
 	}
 	return messages
 }
@@ -82,11 +73,11 @@ func messageLoop(messages <-chan Message, server *eventsource.Eventsource, c *Co
 	for m := range messages {
 		messageData := m.Data()
 		if *verbose {
-			log.Printf("[DEBUG] Got message: ", string(messageData))
+			Debug("Got message: %s", string(messageData))
 		}
 		data, channels, err := parseMessage(messageData)
 		if err != nil {
-			log.Printf("[WARN] json conversion failed %s", err)
+			Warn("json conversion failed %s", err)
 		} else {
 			e := eventsource.DefaultEvent{
 				Message:  data,
@@ -107,16 +98,16 @@ func startServing(server *eventsource.Eventsource) {
 	http.HandleFunc("/", heartbeat)
 	http.Handle("/subscribe", server)
 
-	log.Println("[INFO] EventSource server started")
-	log.Printf("Configuration: port=%s subscription=%s topic=%s"+
+	Info("EventSource server started")
+	Info("Configuration: port=%s subscription=%s topic=%s"+
 		" compression=%t metrics=%t", *port, *subscriptionName,
 		*topicName, *compress, *useMetrics)
 	if *useMetrics {
-		log.Printf("Metrics configuration: metrics-prefix=%s", *metricsPrefix)
+		Info("Metrics configuration: metrics-prefix=%s", *metricsPrefix)
 	}
 	err := http.ListenAndServe(":"+*port, nil)
 	if err != nil {
-		fatal("Server", err)
+		Fatal("Error starting HTTP server: %v", err)
 	}
 }
 
@@ -142,7 +133,7 @@ func setupSignalHandlers(consumer *Consumer) {
 		if shuttingDown {
 			os.Exit(1)
 		}
-		log.Printf("[INFO] Shutting down gracefully. Repeat signal to force shutdown")
+		Info("Shutting down gracefully. Repeat signal to force shutdown")
 		shuttingDown = true
 		consumer.Remove()
 		os.Exit(0)

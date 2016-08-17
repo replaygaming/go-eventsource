@@ -3,7 +3,6 @@ package main
 import (
 	"golang.org/x/net/context"
 	"google.golang.org/cloud/pubsub"
-	"log"
 	"os"
 )
 
@@ -38,10 +37,10 @@ func NewConsumer(topicName string, subscriptionName string) *Consumer {
 
 	pubsubClient, err := pubsub.NewClient(context.Background(), projectId)
 	if err != nil {
-		log.Fatalf("[FATAL] Could not create PubSub client: %v", err)
+		Fatal("Could not create PubSub client: %v", err)
 	}
 
-	log.Printf("Using Google PubSub with project id: %s", projectId)
+	Info("Using Google PubSub with project id: %s", projectId)
 
 	topic := ensureTopic(pubsubClient, topicName)
 	sub := ensureSubscription(pubsubClient, topic, subscriptionName)
@@ -54,18 +53,18 @@ func ensureTopic(pubsubClient *pubsub.Client, topicName string) *pubsub.Topic {
 	topic = pubsubClient.Topic(topicName)
 	topicExists, err := topic.Exists(context.Background())
 	if err != nil {
-		log.Fatalf("[FATAL] Could not verify PubSub topic existence: %v", err)
+		Fatal("Could not verify PubSub topic existence: %v", err)
 	}
 
 	if !topicExists {
-		log.Println("[INFO] Creating new topic")
+		Info("Creating new topic")
 		new_topic, err := pubsubClient.NewTopic(context.Background(), topicName)
 		if err != nil {
-			log.Fatalf("[FATAL] Could not create PubSub topic: %v", err)
+			Fatal("Could not create PubSub topic: %v", err)
 		}
 		topic = new_topic
 	} else {
-		log.Println("[INFO] Using existing topic")
+		Info("Using existing topic")
 	}
 
 	return topic
@@ -76,32 +75,30 @@ func ensureSubscription(pubsubClient *pubsub.Client, topic *pubsub.Topic, subscr
 	subscription = pubsubClient.Subscription(subscriptionName)
 	subscriptionExists, err := subscription.Exists(context.Background())
 	if err != nil {
-		log.Fatalf("[FATAL] Could not verify PubSub subscription existence: %v", err)
+		Fatal("Could not verify PubSub subscription existence: %v", err)
 	}
 
 	if !subscriptionExists {
-		log.Println("[INFO] Creating new subscription")
+		Info("Creating new subscription")
 		new_subscription, err := pubsubClient.NewSubscription(context.Background(), subscriptionName, topic, 0, nil)
 		if err != nil {
-			log.Fatalf("[FATAL] Could not create PubSub subscription: %v", err)
+			Fatal("Could not create PubSub subscription: %v", err)
 		}
 		subscription = new_subscription
 	} else {
-		log.Println("[INFO] Using existing subscription")
+		Info("Using existing subscription")
 	}
 
 	return subscription
 }
 
 func (consumer *Consumer) Consume() (chan Message, error) {
-	// Construct the iterator
-
 	channel := make(chan Message)
 
 	go func() {
 		it, err := consumer.Subscription.Pull(context.Background())
 		if err != nil {
-			log.Printf("Could not pull message from subscription: %v", err)
+			Warn("Could not pull message from subscription: %v", err)
 			return
 		}
 		defer it.Stop()
@@ -112,8 +109,7 @@ func (consumer *Consumer) Consume() (chan Message, error) {
 				break
 			}
 			if err != nil {
-				// handle err ...
-				log.Printf("[ERROR] Error consuming messages: %v", err)
+				Warn("Error consuming messages: %v", err)
 				break
 			}
 
@@ -127,6 +123,6 @@ func (consumer *Consumer) Consume() (chan Message, error) {
 }
 
 func (consumer *Consumer) Remove() {
-	log.Printf("[INFO] Removing subscription %s", consumer.Subscription.Name())
+	Info("Removing subscription %s", consumer.Subscription.Name())
 	consumer.Subscription.Delete(context.Background())
 }
