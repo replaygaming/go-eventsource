@@ -1,120 +1,178 @@
 package main
 
 import (
-	"log"
+	"encoding/hex"
+	"flag"
+	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/replaygaming/eventsource"
-	amqp "github.com/streadway/amqp"
 )
 
 var (
-	environment string
-	amqpURL     string
-	exchange    string
-	prefix      string
-	username    string
-	password    string
-	compress    bool
+	topicName = flag.String("topic",
+		fromEnvWithDefault("ES_TOPIC", "eventsource"),
+		"Topic name")
+
+	subscriptionName = flag.String("subscription",
+		fromEnvWithDefault("ES_SUBSCRIPTION", "eventsource_"+generateSubId()),
+		"Subscription name")
+
+	port = flag.String("port",
+		fromEnvWithDefault("ES_PORT", "3001"),
+		"Eventsource port")
+
+	useMetrics = flag.Bool("metrics", os.Getenv("ES_METRICS") == "true", "Enable metrics")
+
+	metricsPrefix = flag.String("metrics-prefix",
+		fromEnvWithDefault("ES_METRICS_PREFIX", "eventsource"),
+		"Metrics prefix")
+
+	compress = flag.Bool("compression", os.Getenv("ES_COMPRESSION") == "true", "Enable zlib compression of data")
+
+	verbose = flag.Bool("verbose", os.Getenv("ES_VERBOSE") == "true", "Enable verbose output")
 )
 
 func init() {
-	log.Printf("[INFO] Starting")
-
-	environment = os.Getenv("ENV")
-	amqpURL = os.Getenv("AMQP_URL")
-	exchange = os.Getenv("EXCHANGE")
-	prefix = "eventsource"
-	username = os.Getenv("EVENTSOURCE_USER")
-	password = os.Getenv("EVENTSOURCE_PASSWORD")
-	compress = os.Getenv("COMPRESS") != "false"
-
-	log.Printf("[INFO] INIT - environment=%s, AMPQ URL=%s, exchange=%s,"+
-		"prefix=%s, compress=%t, username=%s, password=%s", environment, amqpURL,
-		exchange, prefix, compress, username, password)
+	flag.Parse()
 }
 
-func warn(message string, err error) {
-	log.Printf("[WARN] %s: %s", message, err)
-}
-
-func fatal(message string, err error) {
-	log.Fatalf("[FATAL] %s: %s", message, err)
-}
-
-func newServerWithMetrics(prefix string) *eventsource.Eventsource {
+// Create a new eventsource server, optionally with metrics
+func newServerWithMetrics() *eventsource.Eventsource {
 	server := &eventsource.Eventsource{
 		ChannelSubscriber: eventsource.QueryStringChannels{Name: "channels"},
 	}
-	metrics, err := NewMetrics(prefix)
-	if err != nil {
-		warn("Metrics proxy creation failed", err)
-	} else if environment == "production" {
+
+	if *useMetrics {
+		metrics, err := NewMetrics(*metricsPrefix)
+		if err != nil {
+			Fatal("Could not instantiate metrics", err)
+		}
 		server.Metrics = metrics
 	}
 	server.Start()
 	return server
 }
 
-func newConsumer(amqpURL string, exchange string) *Consumer {
-	// NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (*Consumer, error)
-	consumer, err := NewConsumer(amqpURL, exchange, "fanout", "", "", "eventsource")
-	if err != nil {
-		fatal("AMQP consumer failed", err)
-	}
-	return consumer
+// Create new message consumer
+func newConsumer() *Consumer {
+	return NewConsumer(*topicName, *subscriptionName)
 }
 
-func consume(consumer *Consumer) <-chan amqp.Delivery {
-	messages, err := consumer.Consume()
+// Create the channel that we'll receive messages
+func consume(c *Consumer) <-chan Message {
+	messages, err := c.Consume()
 	if err != nil {
-		fatal("AMQP queue failed", err)
+		Fatal("Failed to consume messages", err)
 	}
 	return messages
 }
 
-func messageLoop(messages <-chan amqp.Delivery, server *eventsource.Eventsource, consumer *Consumer) {
-	for message := range messages {
-		data, channels, err := parseMessage(message.Body)
+// Pulls out messages from the channel
+func messageLoop(messages <-chan Message, server *eventsource.Eventsource, c *Consumer) {
+	for m := range messages {
+		messageData := m.Data()
+		if *verbose {
+			Debug("Got message: %s", string(messageData))
+		}
+		data, channels, err := parseMessage(messageData)
 		if err != nil {
-			warn("JSON conversion failed", err)
+			Warn("json conversion failed %s", err)
 		} else {
-			event := eventsource.DefaultEvent{
+			e := eventsource.DefaultEvent{
 				Message:  data,
 				Channels: channels,
-				Compress: compress,
+				Compress: *compress,
 			}
-			server.Send(event)
+			server.Send(e)
 		}
-		message.Ack(false)
+		m.Done(true)
 	}
-	consumer.Done <- nil
 }
 
+// Handle GET /
 func heartbeat(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
+// Start HTTP server
 func startServing(server *eventsource.Eventsource) {
 	http.HandleFunc("/", heartbeat)
 	http.Handle("/subscribe", server)
 
-	log.Printf("[INFO] STARTING - environment=%s, AMPQ URL=%s, exchange=%s,"+
-		" stats prefix=%s, compression=%t", environment, amqpURL,
-		exchange, prefix, compress)
-	err := http.ListenAndServe(":80", nil)
+	Info("EventSource server started")
+	Info("Configuration: port=%s subscription=%s topic=%s"+
+		" compression=%t metrics=%t", *port, *subscriptionName,
+		*topicName, *compress, *useMetrics)
+	if *useMetrics {
+		Info("Metrics configuration: metrics-prefix=%s", *metricsPrefix)
+	}
+	err := http.ListenAndServe(":"+*port, nil)
 	if err != nil {
-		fatal("Server", err)
+		Fatal("Error starting HTTP server: %v", err)
 	}
 }
 
 func main() {
-	server := newServerWithMetrics(prefix)
-	consumer := newConsumer(amqpURL, exchange)
-	messages := consume(consumer)
+	server := newServerWithMetrics()
+	c := newConsumer()
+	messages := consume(c)
 
-	go messageLoop(messages, server, consumer)
+	setupSignalHandlers(c)
+
+	go messageLoop(messages, server, c)
 
 	startServing(server)
+}
+
+var shuttingDown = false
+
+// Catch signals to perform a graceful shutdown
+func setupSignalHandlers(consumer *Consumer) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		if shuttingDown {
+			os.Exit(1)
+		}
+		Info("Shutting down gracefully. Repeat signal to force shutdown")
+		shuttingDown = true
+		consumer.Remove()
+		os.Exit(0)
+	}()
+}
+
+// Generates a random hexadecimal string
+func generateSubId() string {
+	id := make([]byte, 4)
+	todo := len(id)
+	offset := 0
+	source := rand.NewSource(time.Now().UnixNano())
+	for {
+		val := int64(source.Int63())
+		for i := 0; i < 8; i++ {
+			id[offset] = byte(val & 0xff)
+			todo--
+			if todo == 0 {
+				return hex.EncodeToString(id)
+			}
+			offset++
+			val >>= 8
+		}
+	}
+}
+
+// Attempts to get a value from the environment with a default
+func fromEnvWithDefault(varName string, defaultValue string) string {
+	value := os.Getenv(varName)
+	if value != "" {
+		return value
+	} else {
+		return defaultValue
+	}
 }
