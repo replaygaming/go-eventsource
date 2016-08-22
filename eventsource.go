@@ -60,12 +60,12 @@ func newServerWithMetrics() *eventsource.Eventsource {
 }
 
 // Create new message consumer
-func newConsumer() *consumer.Consumer {
+func newConsumer() consumer.Consumer {
 	return consumer.NewConsumer(*topicName, *subscriptionName)
 }
 
 // Create the channel that we'll receive messages
-func consume(c *consumer.Consumer) <-chan consumer.Message {
+func consume(c consumer.Consumer) <-chan consumer.Message {
 	messages, err := c.Consume()
 	if err != nil {
 		Fatal("Failed to consume messages", err)
@@ -74,7 +74,7 @@ func consume(c *consumer.Consumer) <-chan consumer.Message {
 }
 
 // Pulls out messages from the channel
-func messageLoop(messages <-chan consumer.Message, server *eventsource.Eventsource, c *consumer.Consumer) {
+func messageLoop(messages <-chan consumer.Message, server *eventsource.Eventsource, c consumer.Consumer) {
 	for m := range messages {
 		messageData := m.Data()
 		if *verbose {
@@ -133,7 +133,7 @@ func main() {
 var shuttingDown = false
 
 // Catch signals to perform a graceful shutdown
-func setupSignalHandlers(consumer *consumer.Consumer) {
+func setupSignalHandlers(consumer consumer.Consumer) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
