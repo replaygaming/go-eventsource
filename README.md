@@ -1,71 +1,49 @@
 # go-eventsource
+
 Server-sent stream to update game info in real-time
 
-## Usage
-Get the binary for your [distribution](https://github.com/replaygaming/go-eventsource/releases)
+## Build docker image
 
-Or build it yourself:
-
-Get project dependencies
-
-    export GOPATH=~/go
-    go get github.com/replaygaming/go-eventsource
-    cd ~/go/src/github.com/replaygaming/go-eventsource
-    go get
-
-Compile and run
-
-    go build
-    ./go-eventsource
-
-### Configuration
-Configuration is done using environment variables
-
-```shell
-# Environment
-ENV=[development|production]
-
-# Eventsource port (for example "3001")
-PORT
-
-# AMQP URL (for example "amqp://guest:guest@127.0.0.1:5672/eventsource")
-AMQP_URL
-
-# AMQP Queue name (for example "eventsource")
-AMQP_QUEUE
-
-# StatsD URL (for example "127.0.0.1:8125")
-STATSD_URL
-
-# StatsD Prefix (for example "app.es_go")
-STATSD_PREFIX
-
-# Enable zlib compression of data
-COMPRESS=[true|false]
+To build the `go-eventsource` docker image you should use [jet][1] by running
+```
+jet steps
 ```
 
-## Configure RabbitMQ
+This should generate an image tagged `us.gcr.io/replay-gaming/go-eventsource`
+in your local docker engine.
 
-### Install `rabbitmq` and `rabbitmqadmin`
-Download and installation guide from [RabbitMQ site](https://www.rabbitmq.com/download.html).
-rabbitmqadmin is binary, found as part of [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) project.
+Alternatively you can download the image from our [private docker
+registry][2] manually too.
 
-### Enable the management plugin:
+## Build locally
 
-    [sudo] rabbitmq-plugins enable rabbitmq_management
+To build the binary outside of docker, you can use the standard commands from
+golang:
 
-Then (re)start the rabbitmq daemon.
+```
+go build
+# generates ./go-eventsource
+./go-eventsource -h
+```
 
-    [sudo] sudo rabbitmqctl stop
-    [sudo] rabbitmq-server -detached
+## Run
 
-Declare the host and exchange for the eventsource:
+To run the binary, you can check all the options available by running
+```
+go-eventsource -h
+```
 
-    rabbitmqadmin declare vhost name=eventsource
-    rabbitmqadmin declare permission vhost=eventsource user=guest configure=".*" write=".*" read=".*"
-    rabbitmqadmin -V eventsource declare exchange name=es_ex type=fanout durable=true
+All options can be overridden through environment variables following the
+pattern `ES_<VARNAME>`. Eg. `ES_PORT=3333 ./go-eventsource` changes the http port
+to `3333`
 
-## Important docs to read
+As always for more details on the options, read the source code :)
+
+
+## Useful links
 
 * https://golang.org/doc/install
 * https://golang.org/doc/code.html
+
+[1]: https://codeship.com/documentation/docker/installation/
+[2]: https://replaygaming.atlassian.net/wiki/display/DT/Private+Docker+Registry
