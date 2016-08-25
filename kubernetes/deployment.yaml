@@ -14,12 +14,12 @@ spec:
       - name: eventsource
         image: us.gcr.io/replay-gaming/go-eventsource:latest
         env:
-        - name: ES_PUBSUB_PROJECT_ID
+        - name: PUBSUB_PROJECT_ID
           valueFrom:
             secretKeyRef:
               name: pubsub
               key: project-id
-        - name: ES_PUBSUB_KEYFILE
+        - name: PUBSUB_KEYFILE
           value: /etc/pubsub/keyfile.json
         volumeMounts:
           - name: pubsub-secret
@@ -31,6 +31,7 @@ spec:
         resources:
           limits:
             cpu: "0.1"
+        imagePullPolicy: Always
       volumes:
         - name: pubsub-secret
           secret:
