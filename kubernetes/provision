@@ -6,23 +6,27 @@ class Provision
     def call
       ensure_secret
       ensure_deployment
-      say "EventSource provisioned successfully"
+      ensure_service
+      puts "EventSource provisioned successfully"
     end
 
     def ensure_secret
       return if Kernel.system(*%W[kubectl get secret/pubsub -o name], err: :out, out: "/dev/null")
 
-      say "PubSub secrets are not configured. Make sure you have them provisioned from the infrastructure repository."
-      exit 1
+      abort "PubSub secrets are not configured. Make sure you have them provisioned from the infrastructure repository."
     end
 
     def ensure_deployment
-      deployment_file = File.join(File.expand_path("..", __FILE__), "deployment.yaml")
-      Kernel.system(*%W[kubectl apply -f #{deployment_file}], out: "/dev/null")
+      kube_apply "deployment"
     end
 
-    def say(message)
-      puts message
+    def ensure_service
+      kube_apply "service"
+    end
+
+    def kube_apply(filename)
+      file = File.join(File.expand_path("..", __FILE__), "#{filename}.yaml")
+      Kernel.system(*%W[kubectl apply -f #{file}], out: "/dev/null")
     end
   end
 end
