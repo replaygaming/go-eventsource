@@ -29,8 +29,12 @@ spec:
         - name: sse
           containerPort: 80
         resources:
+          requests:
+            cpu: "500m"
+            memory: "200m"
           limits:
-            cpu: "0.1"
+            cpu: "3000m"
+            memory: "400m"
         imagePullPolicy: Always
       volumes:
         - name: pubsub-secret
