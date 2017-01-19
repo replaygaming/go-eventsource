@@ -1,13 +1,13 @@
 package main
 
 import (
+	"cloud.google.com/go/pubsub"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/cloud"
-	"google.golang.org/cloud/pubsub"
+	"google.golang.org/api/option"
 	"io/ioutil"
 	"log"
 	"os"
@@ -58,9 +58,15 @@ func main() {
 		log.Fatalf("Could not parse message: %v", err)
 	}
 
-	topic.Publish(context.Background(), &pubsub.Message{
+	msgIDs, err := topic.Publish(context.Background(), &pubsub.Message{
 		Data: payload,
 	})
+	if err != nil {
+		fmt.Printf("Error publishing message %v\n", payload)
+	}
+	for _, id := range msgIDs {
+		fmt.Printf("Published a message; msg ID: %v\nPayload: %v\n", id, payload)
+	}
 }
 
 var defaultProjectId = "emulator-project-id"
@@ -93,7 +99,7 @@ func newPubSubClient() (*pubsub.Client, error) {
 			return nil, err
 		}
 		tokenSource := conf.TokenSource(ctx)
-		client, err = pubsub.NewClient(ctx, projectId, cloud.WithTokenSource(tokenSource))
+		client, err = pubsub.NewClient(ctx, projectId, option.WithTokenSource(tokenSource))
 	} else {
 		// Create client without token
 		client, err = pubsub.NewClient(ctx, projectId)
