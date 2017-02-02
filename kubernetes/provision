@@ -1,13 +1,25 @@
 #!/usr/bin/env ruby
 
+require "erb"
+require "open3"
+
 class Provision
   class << self
 
     def call
+      help if ARGV[0] == "-h" || ARGV[0] == "--help"
+
       ensure_secret
       ensure_deployment
       ensure_service
-      puts "EventSource provisioned successfully"
+      puts "EventSource provisioned successfully for environment '#{environment}'"
+    end
+
+    def help
+      puts "Usage: provision [environment]"
+      puts
+      puts "Environment defaults to 'staging'"
+      exit 1
     end
 
     def ensure_secret
@@ -17,16 +29,35 @@ class Provision
     end
 
     def ensure_deployment
-      kube_apply "deployment"
+      apply_file "deployment"
     end
 
     def ensure_service
-      kube_apply "service"
+      apply_file "service"
     end
 
-    def kube_apply(filename)
-      file = File.join(File.expand_path("..", __FILE__), "#{filename}.yaml")
-      Kernel.system(*%W[kubectl apply -f #{file}], out: "/dev/null")
+    def apply_file(filename)
+      file = File.join(File.expand_path("..", __FILE__), "#{filename}.yaml.erb")
+      resource = ERB.new(File.read(file)).result(binding)
+      kube_apply(resource) || abort("Error applying file #{filename}")
+    end
+
+    def kube_apply(resource)
+      Open3.popen2e("kubectl apply --record=true -f -") do |stdin, out_err, wait_thr|
+        stdin.write resource
+        stdin.close
+        output = out_err.read
+        if wait_thr.value.success?
+          true
+        else
+          puts output
+          false
+        end
+      end
+    end
+
+    def environment
+      ARGV[0] || "staging"
     end
   end
 end

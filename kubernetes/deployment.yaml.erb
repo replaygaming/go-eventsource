@@ -3,12 +3,15 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: eventsource
+  labels:
+    component: eventsource
+    environment: <%= environment %>
 spec:
-  replicas: 2
   template:
     metadata:
       labels:
         component: eventsource
+        environment: <%= environment %>
     spec:
       containers:
       - name: eventsource
