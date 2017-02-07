@@ -17,6 +17,12 @@ spec:
       - name: eventsource
         image: us.gcr.io/replay-gaming/go-eventsource:latest
         env:
+        - name: ES_TOPIC
+          value: <%= topic_name %>
+        <% if environment == "production" %>
+        - name: ES_COMPRESSION
+          value: "true"
+        <% end %>
         - name: PUBSUB_PROJECT_ID
           valueFrom:
             secretKeyRef:
