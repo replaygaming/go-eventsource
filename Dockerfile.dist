@@ -4,4 +4,4 @@ RUN apk add --update ca-certificates
 
 ADD ./tmp/go-eventsource /go-eventsource
 
-CMD /go-eventsource
+CMD ["/go-eventsource"]

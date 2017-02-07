@@ -143,7 +143,12 @@ func setupSignalHandlers(consumer consumer.Consumer) {
 		}
 		Info("Shutting down gracefully. Repeat signal to force shutdown")
 		shuttingDown = true
-		consumer.Remove()
+		Info("Removing consumer")
+		err := consumer.Remove()
+		if err != nil {
+			Fatal("Could not remove subscription %s: %v", *subscriptionName, err)
+		}
+		Info("Consumer removed successfully. Exiting")
 		os.Exit(0)
 	}()
 }
