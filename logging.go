@@ -18,6 +18,10 @@ func Warn(message string, v ...interface{}) {
 	logMessage("WARN", message, v...)
 }
 
+func Error(message string, v ...interface{}) {
+	logMessage("ERROR", message, v...)
+}
+
 func Fatal(message string, v ...interface{}) {
 	log.Fatalf("[FATAL] "+message, v...)
 }
