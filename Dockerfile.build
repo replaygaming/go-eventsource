@@ -1,15 +1,21 @@
-FROM us.gcr.io/replay-gaming/alpine:3.3
+FROM us.gcr.io/replay-gaming/alpine:3.5
 
-ENV GOPATH=/go
+ENV GOPATH=/go \
+    GO15VENDOREXPERIMENT=1
 RUN mkdir -p /go/src/github.com/replaygaming/go-eventsource
 WORKDIR /go/src/github.com/replaygaming/go-eventsource
 
-RUN apk add --no-cache -U go git
+RUN apk add --no-cache -U go git wget tar libc-dev \
+    && wget -q https://github.com/Masterminds/glide/releases/download/v0.12.3/glide-v0.12.3-linux-amd64.tar.gz -O glide.tar.gz \
+    && tar -xf ./glide.tar.gz \
+    && mv linux-amd64/glide /usr/local/bin \
+    && rm -rf glide.tar.gz linux-amd64
 
-ADD *.go /go/src/github.com/replaygaming/go-eventsource/
+COPY glide.yaml glide.lock ./
+COPY *.go ./
 
-RUN go get
+RUN glide install
 RUN go build -tags netgo
 
-ADD client/*.go /go/src/github.com/replaygaming/go-eventsource/client/
+COPY client/*.go ./client/
 RUN cd client && go build -tags netgo

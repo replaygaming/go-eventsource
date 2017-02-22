@@ -1,4 +1,4 @@
-FROM us.gcr.io/replay-gaming/alpine:3.3
+FROM us.gcr.io/replay-gaming/alpine:3.5
 
 RUN apk add -U --no-cache curl netcat-openbsd bash
 
