@@ -1,5 +1,5 @@
-hash: 174c35b70f81b31a63c6a255b4145c9c4a8dcf011c0a0b3bf8d62f7c3d5464e3
-updated: 2017-02-22T09:30:06.701356127-03:00
+hash: dadfe59f92e6526b6865f2a2f234b60af9eb48750def151a4f18f2e4bc261249
+updated: 2017-02-22T10:26:31.652798558-03:00
 imports:
 - name: cloud.google.com/go
   version: c116c7972ec94f148459a304d07a67ecbc770d4b
@@ -7,6 +7,7 @@ imports:
   - compute/metadata
   - iam
   - internal
+  - monitoring/apiv3
   - pubsub
   - pubsub/apiv1
 - name: github.com/golang/protobuf
@@ -69,8 +70,14 @@ imports:
   version: dee11a626cb8e7ff045ac9413dcd8a92e72f5863
   subpackages:
   - googleapis/api/annotations
+  - googleapis/api/distribution
+  - googleapis/api/label
+  - googleapis/api/metric
+  - googleapis/api/monitoredres
   - googleapis/iam/v1
+  - googleapis/monitoring/v3
   - googleapis/pubsub/v1
+  - googleapis/rpc/status
 - name: google.golang.org/grpc
   version: 20633fa172ac711ac6a77fd573ed13f23ec56dcb
   subpackages:

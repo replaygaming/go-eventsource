@@ -4,6 +4,7 @@ import:
   version: ~0.6.0
   subpackages:
   - pubsub
+  - monitoring/apiv3
 - package: github.com/replaygaming/consumer
 - package: github.com/replaygaming/eventsource
   version: error-logging
