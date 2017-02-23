@@ -9,7 +9,7 @@ To build the `go-eventsource` docker image you should use [jet][1] by running
 jet steps
 ```
 
-This should generate an image tagged `us.gcr.io/replay-gaming/go-eventsource`
+This should generate an image tagged `us.gcr.io/replay-gaming/go-eventsource:latest`
 in your local docker engine.
 
 Alternatively you can download the image from our [private docker
@@ -39,6 +39,15 @@ to `3333`
 
 As always for more details on the options, read the source code :)
 
+## Kubernetes
+
+To deploy to kubernetes, use the `provision` script under the `kubernetes` folder.
+
+The help should guide you on how to use it, and it assumes sane defaults for staging.
+
+```
+./kubernetes/provision -h
+```
 
 ## Useful links
 
