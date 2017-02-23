@@ -15,7 +15,6 @@ import (
 )
 
 const projectID = "replay-gaming"
-const bufferSize = 10
 
 type StackdriverMetrics struct {
 	prefix           string
