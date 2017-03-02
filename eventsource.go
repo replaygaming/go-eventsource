@@ -142,9 +142,7 @@ func main() {
 
 	setupSignalHandlers(c)
 
-	if *verbose {
-		go errorLoop(server)
-	}
+	go errorLoop(server)
 	go messageLoop(messages, server, c)
 
 	startServing(server)
@@ -152,7 +150,9 @@ func main() {
 
 func errorLoop(server *eventsource.Eventsource) {
 	for err := range server.Errors() {
-		Error("Error: %v", err)
+		if *verbose {
+			Error("Error: %v", err)
+		}
 	}
 }
 
