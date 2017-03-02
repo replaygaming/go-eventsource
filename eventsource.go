@@ -142,7 +142,9 @@ func main() {
 
 	setupSignalHandlers(c)
 
-	go errorLoop(server)
+	if *verbose {
+		go errorLoop(server)
+	}
 	go messageLoop(messages, server, c)
 
 	startServing(server)
