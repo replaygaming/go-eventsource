@@ -17,20 +17,16 @@
   service: dist
   type: parallel
   steps:
-  #- type: push
-    #image_name: us.gcr.io/replay-gaming/go-eventsource
-    #image_tag: "latest"
-    #registry: https://us.gcr.io
-    #dockercfg_service: gcr_dockercfg
-
   - type: push
-    image_name: us.gcr.io/replay-gaming/go-eventsource
-    image_tag: "{{.Timestamp}}"
-    registry: https://us.gcr.io
-    dockercfg_service: gcr_dockercfg
-
-  - type: push
+    name: Push commit tag
     image_name: us.gcr.io/replay-gaming/go-eventsource
     image_tag: "{{.CommitID}}"
+    registry: https://us.gcr.io
+    dockercfg_service: gcr_dockercfg
+  - type: push
+    tag: ^(v\d+\.\d+\.\d+)$
+    name: Push branch tag
+    image_name: us.gcr.io/replay-gaming/go-eventsource
+    image_tag: "{{.Branch}}"
     registry: https://us.gcr.io
     dockercfg_service: gcr_dockercfg
