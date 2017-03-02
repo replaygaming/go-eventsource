@@ -9,3 +9,4 @@ _testmain.go
 
 /**/google_deployment.env
 codeship.aes
+/vendor

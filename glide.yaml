@@ -1,0 +1,18 @@
+package: github.com/replaygaming/go-eventsource
+import:
+- package: cloud.google.com/go
+  version: ~0.6.0
+  subpackages:
+  - pubsub
+- package: github.com/replaygaming/consumer
+- package: github.com/replaygaming/eventsource
+  version: error-logging
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: golang.org/x/oauth2
+  subpackages:
+  - google
+- package: google.golang.org/api
+  subpackages:
+  - option

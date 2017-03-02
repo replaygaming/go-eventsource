@@ -125,9 +125,16 @@ func main() {
 
 	setupSignalHandlers(c)
 
+	go errorLoop(server)
 	go messageLoop(messages, server, c)
 
 	startServing(server)
+}
+
+func errorLoop(server *eventsource.Eventsource) {
+	for err := range server.Errors() {
+		Error("Error: %v", err)
+	}
 }
 
 var shuttingDown = false

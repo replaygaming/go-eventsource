@@ -17,11 +17,11 @@
   service: dist
   type: parallel
   steps:
-  - type: push
-    image_name: us.gcr.io/replay-gaming/go-eventsource
-    image_tag: "latest"
-    registry: https://us.gcr.io
-    dockercfg_service: gcr_dockercfg
+  #- type: push
+    #image_name: us.gcr.io/replay-gaming/go-eventsource
+    #image_tag: "latest"
+    #registry: https://us.gcr.io
+    #dockercfg_service: gcr_dockercfg
 
   - type: push
     image_name: us.gcr.io/replay-gaming/go-eventsource
