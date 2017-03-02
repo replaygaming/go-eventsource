@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	"errors"
 	"flag"
 	"math/rand"
 	"net/http"
@@ -30,8 +31,12 @@ var (
 	useMetrics = flag.Bool("metrics", os.Getenv("ES_METRICS") == "true", "Enable metrics")
 
 	metricsPrefix = flag.String("metrics-prefix",
-		fromEnvWithDefault("ES_METRICS_PREFIX", "eventsource"),
+		fromEnvWithDefault("ES_METRICS_PREFIX", "production"),
 		"Metrics prefix")
+
+	metricsProvider = flag.String("metrics-provider",
+		fromEnvWithDefault("ES_METRICS_PROVIDER", "log"),
+		"Metrics provider. Available ones are: stackdriver and log")
 
 	compress = flag.Bool("compression", os.Getenv("ES_COMPRESSION") == "true", "Enable zlib compression of data")
 
@@ -49,7 +54,7 @@ func newServerWithMetrics() *eventsource.Eventsource {
 	}
 
 	if *useMetrics {
-		metrics, err := NewMetrics(*metricsPrefix)
+		metrics, err := newMetrics()
 		if err != nil {
 			Fatal("Could not instantiate metrics", err)
 		}
@@ -57,6 +62,18 @@ func newServerWithMetrics() *eventsource.Eventsource {
 	}
 	server.Start()
 	return server
+}
+
+func newMetrics() (eventsource.Metrics, error) {
+	Info("Instantiating " + *metricsProvider + " metrics")
+	switch *metricsProvider {
+	case "stackdriver":
+		return NewStackdriverMetrics(*metricsPrefix, *subscriptionName)
+	case "log":
+		return NewLogMetrics(*metricsPrefix)
+	default:
+		return nil, errors.New("Don't know how to instantiate metrics provider: " + *metricsProvider)
+	}
 }
 
 // Create new message consumer

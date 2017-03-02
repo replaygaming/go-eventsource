@@ -1,7 +1,6 @@
 FROM us.gcr.io/replay-gaming/alpine:3.5
 
-ENV GOPATH=/go \
-    GO15VENDOREXPERIMENT=1
+ENV GOPATH=/go
 RUN mkdir -p /go/src/github.com/replaygaming/go-eventsource
 WORKDIR /go/src/github.com/replaygaming/go-eventsource
 
