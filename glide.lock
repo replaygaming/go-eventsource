@@ -1,5 +1,5 @@
-hash: dadfe59f92e6526b6865f2a2f234b60af9eb48750def151a4f18f2e4bc261249
-updated: 2017-02-22T10:26:31.652798558-03:00
+hash: 9b4ccaca0f7cc03b4d9aeed009bd2a8f4d906816fc5a40df2ec36fc3cded1bf3
+updated: 2017-03-02T08:20:26.493637368-03:00
 imports:
 - name: cloud.google.com/go
   version: c116c7972ec94f148459a304d07a67ecbc770d4b
@@ -25,7 +25,7 @@ imports:
 - name: github.com/replaygaming/consumer
   version: 33f730ad2bd4d175c478503016ab80c6d424caf3
 - name: github.com/replaygaming/eventsource
-  version: cb631ccba768c0344a2514a80909635769740622
+  version: 84be8a20bd09acdd275c109237e052787f89e652
 - name: golang.org/x/net
   version: 6b27048ae5e6ad1ef927e72e437531493de612fe
   subpackages:
