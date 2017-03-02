@@ -2,77 +2,123 @@
 
 require "erb"
 require "open3"
+require "optparse"
+
+options = {
+  environment: "staging",
+  metrics_provider: "log",
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: provision [options] TAG"
+
+  opts.on("-e [environment]", "--environment [environment]", String, "Environment to provision. Defaults to 'staging'") do |env|
+    options[:environment] = env
+  end
+
+  opts.on("-m [metrics_provider]", "--metrics-provider [metrics_provider]", String, "Metrics provider to use. Defaults to 'log'") do |metrics|
+    options[:metrics_provider] = metrics
+  end
+
+  opts.on("-t [topic_name]", "--topic_name [topic_name]", String, "Topic name to use. Defaults to sane defaults depending on environment") do |topic_name|
+    options[:topic_name] = topic_name
+  end
+
+  opts.on("--no-metrics", "Metrics provider to use. Defaults to 'log'") do
+    options[:metrics_provider] = nil
+  end
+
+  opts.on("-n", "--dry-run", "Don't actually change anything, just print out generated deployment/service") do
+    options[:dry_run] = true
+  end
+end
+parser.parse!
 
 class Provision
-  class << self
+  def initialize(options, tag)
+    @options = options
+    @tag = tag
+  end
 
-    def call
-      help if ARGV[0] == "-h" || ARGV[0] == "--help"
-
-      ensure_secret
-      ensure_deployment
-      ensure_service
+  def call
+    ensure_secret
+    ensure_deployment
+    ensure_service
+    if @options[:dry_run]
+      puts
+      puts "Nothing changed since dry run mode was used"
+    else
       puts "EventSource provisioned successfully for environment '#{environment}'"
     end
+  end
 
-    def help
-      puts "Usage: provision [environment] [topic_name]"
+  def ensure_secret
+    return if Kernel.system(*%W[kubectl get secret/pubsub -o name], err: :out, out: "/dev/null")
+
+    abort "PubSub secrets are not configured. Make sure you have them provisioned from the infrastructure repository."
+  end
+
+  def ensure_deployment
+    apply_file "deployment"
+  end
+
+  def ensure_service
+    apply_file "service"
+  end
+
+  def apply_file(filename)
+    file = File.join(File.expand_path("..", __FILE__), "#{filename}.yaml.erb")
+    resource = ERB.new(File.read(file)).result(binding)
+    if @options[:dry_run]
       puts
-      puts "Environment defaults to 'staging'"
-      exit 1
+      puts resource
+      return
     end
+    kube_apply(resource) || abort("Error applying file #{filename}")
+  end
 
-    def ensure_secret
-      return if Kernel.system(*%W[kubectl get secret/pubsub -o name], err: :out, out: "/dev/null")
-
-      abort "PubSub secrets are not configured. Make sure you have them provisioned from the infrastructure repository."
-    end
-
-    def ensure_deployment
-      apply_file "deployment"
-    end
-
-    def ensure_service
-      apply_file "service"
-    end
-
-    def apply_file(filename)
-      file = File.join(File.expand_path("..", __FILE__), "#{filename}.yaml.erb")
-      resource = ERB.new(File.read(file)).result(binding)
-      kube_apply(resource) || abort("Error applying file #{filename}")
-    end
-
-    def kube_apply(resource)
-      Open3.popen2e("kubectl apply --record=true -f -") do |stdin, out_err, wait_thr|
-        stdin.write resource
-        stdin.close
-        output = out_err.read
-        if wait_thr.value.success?
-          true
-        else
-          puts output
-          false
-        end
-      end
-    end
-
-    def environment
-      ARGV[0] || "staging"
-    end
-
-    def topic_name
-      return ARGV[1] if ARGV[1]
-
-      case environment
-      when "staging"
-        "eventsource-staging"
-      when "production"
-        "eventsource"
+  def kube_apply(resource)
+    Open3.popen2e("kubectl apply --record=true -f -") do |stdin, out_err, wait_thr|
+      stdin.write resource
+      stdin.close
+      output = out_err.read
+      if wait_thr.value.success?
+        true
       else
-        abort("Don't know what topic name to use for this environment. Please provide one. See --help for more information")
+        puts output
+        false
       end
+    end
+  end
+
+  def environment
+    @options[:environment]
+  end
+
+  def metrics_provider
+    @options[:metrics_provider]
+  end
+
+  def tag
+    @tag
+  end
+
+  def topic_name
+    return @options[:topic_name] if @options[:topic_name]
+
+    case environment
+    when "staging"
+      "eventsource-staging"
+    when "production"
+      "eventsource"
+    else
+      abort("Don't know what topic name to use for this environment. Please provide one. See --help for more information")
     end
   end
 end
 
-Provision.call
+tag = ARGV[0]
+
+abort(parser.help) if tag.nil? || tag == ""
+
+Provision.new(options, tag).call

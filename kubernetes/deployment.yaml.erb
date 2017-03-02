@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: eventsource
-        image: us.gcr.io/replay-gaming/go-eventsource:latest
+        image: us.gcr.io/replay-gaming/go-eventsource:<%= tag %>
         env:
         - name: ES_TOPIC
           value: <%= topic_name %>
@@ -28,6 +28,19 @@ spec:
             secretKeyRef:
               name: pubsub
               key: project-id
+        - name: ES_SUBSCRIPTION
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        <% if metrics_provider %>
+        - name: ES_METRICS
+          value: "true"
+        - name: ES_METRICS_PROVIDER
+          value: "<%= metrics_provider %>"
+        - name: ES_METRICS_PREFIX
+          value: <%= environment %>
+        <% end %>
         - name: PUBSUB_KEYFILE
           value: /etc/pubsub/keyfile.json
         volumeMounts:
