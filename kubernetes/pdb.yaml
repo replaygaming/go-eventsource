@@ -1,0 +1,9 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: eventsource
+spec:
+  selector:
+    matchLabels:
+      component: eventsource
+  minAvailable: 50%

@@ -42,6 +42,7 @@ class Provision
 
   def call
     ensure_secret
+    ensure_pdb
     ensure_deployment
     ensure_service
     if @options[:dry_run]
@@ -58,23 +59,34 @@ class Provision
     abort "PubSub secrets are not configured. Make sure you have them provisioned from the infrastructure repository."
   end
 
+  def ensure_pdb
+    apply_file "pdb", "yaml"
+  end
+
   def ensure_deployment
-    apply_file "deployment"
+    apply_file "deployment", "yaml.erb"
   end
 
   def ensure_service
-    apply_file "service"
+    apply_file "service", "yaml.erb"
   end
 
-  def apply_file(filename)
-    file = File.join(File.expand_path("..", __FILE__), "#{filename}.yaml.erb")
-    resource = ERB.new(File.read(file)).result(binding)
+  def apply_file(filename, extension)
+    file = File.join(File.expand_path("..", __FILE__), "#{filename}.#{extension}")
+    case extension
+      when "yaml", "yml"
+        resource = File.read(file)
+      when "yaml.erb", "yml.erb"
+        resource = ERB.new(File.read(file)).result(binding)
+      else
+        abort("Unsupported file extension '#{extension}'."
+    end
     if @options[:dry_run]
       puts
       puts resource
       return
     end
-    kube_apply(resource) || abort("Error applying file #{filename}")
+    kube_apply(resource) || abort("Error applying file '#{filename}.#{extension}'.")
   end
 
   def kube_apply(resource)
