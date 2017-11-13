@@ -4,6 +4,22 @@ require "erb"
 require "open3"
 require "optparse"
 
+defaults_staging = {
+  replicas: 1,
+  cpu_request: "100m",
+  cpu_limit: "100m",
+  memory_request: "16Mi",
+  memory_limit: "32Mi"
+}
+
+defaults_production = {
+  replicas: 6,
+  cpu_request: "200m",
+  cpu_limit: "300m",
+  memory_request: "64Mi",
+  memory_limit: "128Mi"
+}
+
 options = {
   environment: "staging",
   metrics_provider: "log",
@@ -35,8 +51,10 @@ end
 parser.parse!
 
 class Provision
-  def initialize(options, tag)
+  def initialize(options, defaults_staging, defaults_production, tag)
     @options = options
+    @defaults_staging = defaults_staging
+    @defaults_production = defaults_production
     @tag = tag
   end
 
@@ -79,7 +97,7 @@ class Provision
       when "yaml.erb", "yml.erb"
         resource = ERB.new(File.read(file)).result(binding)
       else
-        abort("Unsupported file extension '#{extension}'."
+        abort("Unsupported file extension '#{extension}'.")
     end
     if @options[:dry_run]
       puts
@@ -115,6 +133,61 @@ class Provision
     @tag
   end
 
+  def replicas
+    case environment
+    when "staging"
+      @defaults_staging[:replicas]
+    when "production"
+      @defaults_production[:replicas]
+    else
+      abort("Invalid environment '#{environment}'.")
+    end
+  end
+
+  def cpu_request
+    case environment
+    when "staging"
+      @defaults_staging[:cpu_request]
+    when "production"
+      @defaults_production[:cpu_request]
+    else
+      abort("Invalid environment '#{environment}'.")
+    end
+  end
+
+  def cpu_limit
+    case environment
+    when "staging"
+      @defaults_staging[:cpu_limit]
+    when "production"
+      @defaults_production[:cpu_limit]
+    else
+      abort("Invalid environment '#{environment}'.")
+    end
+  end
+
+  def memory_request
+    case environment
+    when "staging"
+      @defaults_staging[:memory_request]
+    when "production"
+      @defaults_production[:memory_request]
+    else
+      abort("Invalid environment '#{environment}'.")
+    end
+  end
+
+  def memory_limit
+    case environment
+    when "staging"
+      @defaults_staging[:memory_limit]
+    when "production"
+      @defaults_production[:memory_limit]
+    else
+      abort("Invalid environment '#{environment}'.")
+    end
+  end
+
   def topic_name
     return @options[:topic_name] if @options[:topic_name]
 
@@ -133,4 +206,4 @@ tag = ARGV[0]
 
 abort(parser.help) if tag.nil? || tag == ""
 
-Provision.new(options, tag).call
+Provision.new(options, defaults_staging, defaults_production, tag).call

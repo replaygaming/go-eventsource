@@ -7,6 +7,7 @@ metadata:
     component: eventsource
     environment: <%= environment %>
 spec:
+  replicas: <%= replicas %>
   template:
     metadata:
       labels:
@@ -52,11 +53,11 @@ spec:
           containerPort: 80
         resources:
           requests:
-            cpu: "500m"
-            memory: "200Mi"
+            cpu: <%= cpu_request %>
+            memory: <%= memory_request %>
           limits:
-            cpu: "3000m"
-            memory: "400Mi"
+            cpu: <%= cpu_limit %>
+            memory: <%= memory_limit %>
         imagePullPolicy: Always
       volumes:
         - name: pubsub-secret
