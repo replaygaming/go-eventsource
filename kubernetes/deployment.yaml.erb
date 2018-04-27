@@ -1,5 +1,4 @@
----
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: eventsource
@@ -8,6 +7,10 @@ metadata:
     environment: <%= environment %>
 spec:
   replicas: <%= replicas %>
+  selector:
+    matchLabels:
+      component: eventsource
+      environment: <%= environment %>
   template:
     metadata:
       labels:
