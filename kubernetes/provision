@@ -3,6 +3,7 @@
 require "erb"
 require "open3"
 require "optparse"
+require "highline"
 
 defaults_staging = {
   replicas: 1,
@@ -23,6 +24,7 @@ defaults_production = {
 options = {
   environment: "staging",
   metrics_provider: "log",
+  namespace: "default",
 }
 
 parser = OptionParser.new do |opts|
@@ -34,6 +36,10 @@ parser = OptionParser.new do |opts|
 
   opts.on("-m [metrics_provider]", "--metrics-provider [metrics_provider]", String, "Metrics provider to use. Defaults to 'log'") do |metrics|
     options[:metrics_provider] = metrics
+  end
+
+  opts.on("-n [namespace]", "--namespace [namespace]", String, "Namespace to deploy. Not valid for production. Defaults to '#{options[:namespace]}'") do |namespace|
+    options[:namespace] = namespace
   end
 
   opts.on("-t [topic_name]", "--topic_name [topic_name]", String, "Topic name to use. Defaults to sane defaults depending on environment") do |topic_name|
@@ -67,12 +73,12 @@ class Provision
       puts
       puts "Nothing changed since dry run mode was used"
     else
-      puts "EventSource provisioned successfully for environment '#{environment}'"
+      puts "EventSource provisioned successfully for environment '#{environment}' and namespace '#{namespace}'."
     end
   end
 
   def ensure_secret
-    return if Kernel.system(*%W[kubectl get secret/pubsub -o name], err: :out, out: "/dev/null")
+    return if Kernel.system(*%W[kubectl get secret/pubsub -n #{namespace} -o name], err: :out, out: "/dev/null")
 
     abort "PubSub secrets are not configured. Make sure you have them provisioned from the infrastructure repository."
   end
@@ -108,7 +114,7 @@ class Provision
   end
 
   def kube_apply(resource)
-    Open3.popen2e("kubectl apply --record=true -f -") do |stdin, out_err, wait_thr|
+    Open3.popen2e("kubectl apply -n #{namespace} --record=true -f -") do |stdin, out_err, wait_thr|
       stdin.write resource
       stdin.close
       output = out_err.read
@@ -123,6 +129,10 @@ class Provision
 
   def environment
     @options[:environment]
+  end
+
+  def namespace
+    @options[:namespace]
   end
 
   def metrics_provider
@@ -193,7 +203,11 @@ class Provision
 
     case environment
     when "staging"
-      "eventsource-staging"
+      if namespace == 'default'
+        "eventsource-staging"
+      else
+        "eventsource-#{namespace}"
+      end
     when "production"
       "eventsource"
     else
@@ -205,5 +219,7 @@ end
 tag = ARGV[0]
 
 abort(parser.help) if tag.nil? || tag == ""
+
+abort("Production resources must be provisioned on the 'default' namespace.") if options[:environment] == 'production' && options[:namespace] != 'default'
 
 Provision.new(options, defaults_staging, defaults_production, tag).call
