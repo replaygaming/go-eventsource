@@ -3,6 +3,7 @@
 require "erb"
 require "open3"
 require "optparse"
+require "highline"
 
 defaults_staging = {
   replicas: 1,
@@ -22,29 +23,42 @@ defaults_production = {
 
 options = {
   environment: "staging",
-  metrics_provider: "log",
+  namespace: "default",
+  metrics_provider: "stackdriver"
 }
 
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: provision [options] TAG"
 
-  opts.on("-e [environment]", "--environment [environment]", String, "Environment to provision. Defaults to 'staging'") do |env|
+  opts.on("-e [environment]", "--environment [environment]", String, "Environment to provision. Defaults to '#{options[:environment]}'") do |env|
     options[:environment] = env
   end
 
-  opts.on("-m [metrics_provider]", "--metrics-provider [metrics_provider]", String, "Metrics provider to use. Defaults to 'log'") do |metrics|
+  opts.on("-m [metrics_provider]", "--metrics-provider [metrics_provider]", String, "Metrics provider to use. Defaults to '#{options[:metrics_provider]}'") do |metrics|
     options[:metrics_provider] = metrics
+  end
+
+  opts.on("-n [namespace]", "--namespace [namespace]", String, "Namespace to deploy. Not valid for production. Defaults to '#{options[:namespace]}'") do |namespace|
+    options[:namespace] = namespace
+  end
+
+  opts.on("--metrics-topic [metrics_topic]", String, "Metrics topic name to use. Defaults to sane defaults depending on environment") do |metrics_topic|
+    options[:metrics_topic] = metrics_topic
   end
 
   opts.on("-t [topic_name]", "--topic_name [topic_name]", String, "Topic name to use. Defaults to sane defaults depending on environment") do |topic_name|
     options[:topic_name] = topic_name
   end
 
-  opts.on("--no-metrics", "Metrics provider to use. Defaults to 'log'") do
+  opts.on("--no-metrics", "Disable metrics provider. Defaults to '#{options[:metrics_provider]}'") do
     options[:metrics_provider] = nil
   end
 
-  opts.on("-n", "--dry-run", "Don't actually change anything, just print out generated deployment/service") do
+  opts.on("-s", "--skip-context-check", "Do not check kubectl context. This is intended to be used only by scripts.") do
+    options[:skip_context_check] = true
+  end
+
+  opts.on("-d", "--dry-run", "Don't actually change anything, just print out generated deployment/service") do
     options[:dry_run] = true
   end
 end
@@ -60,19 +74,19 @@ class Provision
 
   def call
     ensure_secret
-    ensure_pdb
+    ensure_pdb if environment == 'production'
     ensure_deployment
     ensure_service
     if @options[:dry_run]
       puts
       puts "Nothing changed since dry run mode was used"
     else
-      puts "EventSource provisioned successfully for environment '#{environment}'"
+      puts "EventSource provisioned successfully for environment '#{environment}' and namespace '#{namespace}'."
     end
   end
 
   def ensure_secret
-    return if Kernel.system(*%W[kubectl get secret/pubsub -o name], err: :out, out: "/dev/null")
+    return if Kernel.system(*%W[kubectl get secret/pubsub -n #{namespace} -o name], err: :out, out: "/dev/null")
 
     abort "PubSub secrets are not configured. Make sure you have them provisioned from the infrastructure repository."
   end
@@ -108,7 +122,7 @@ class Provision
   end
 
   def kube_apply(resource)
-    Open3.popen2e("kubectl apply --record=true -f -") do |stdin, out_err, wait_thr|
+    Open3.popen2e("kubectl apply -n #{namespace} --record=true -f -") do |stdin, out_err, wait_thr|
       stdin.write resource
       stdin.close
       output = out_err.read
@@ -125,8 +139,27 @@ class Provision
     @options[:environment]
   end
 
+  def namespace
+    @options[:namespace]
+  end
+
   def metrics_provider
     @options[:metrics_provider]
+  end
+
+  def metrics_prefix
+    case environment
+    when "staging"
+      if namespace == 'default'
+        "staging"
+      else
+        "#{namespace}"
+      end
+    when "production"
+      "production"
+    else
+      abort("Don't know what metrics prefix to use for this environment.")
+    end
   end
 
   def tag
@@ -193,11 +226,32 @@ class Provision
 
     case environment
     when "staging"
-      "eventsource-staging"
+      if namespace == 'default'
+        "eventsource-staging"
+      else
+        "eventsource-#{namespace}"
+      end
     when "production"
       "eventsource"
     else
       abort("Don't know what topic name to use for this environment. Please provide one. See --help for more information")
+    end
+  end
+
+  def metrics_topic
+    return @options[:metrics_topic] if @options[:metrics_topic]
+
+    case environment
+    when "staging"
+      if namespace == 'default'
+        "metrics-staging"
+      else
+        "metrics-#{namespace}"
+      end
+    when "production"
+      "metrics"
+    else
+      abort("Don't know what metric topics to use for this environment. Please provide one. See --help for more information")
     end
   end
 end
@@ -205,5 +259,12 @@ end
 tag = ARGV[0]
 
 abort(parser.help) if tag.nil? || tag == ""
+
+abort("Production resources must be provisioned on the 'default' namespace.") if options[:environment] == 'production' && options[:namespace] != 'default'
+
+if !options[:skip_context_check]
+  kubectl_context = %x(kubectl config current-context).chomp
+  abort('Okay, bye!') unless HighLine.new.agree("You are going to run this command for the environment '#{options[:environment]}' and namespace '#{options[:namespace]}'.\nYour current kubectl context is: #{kubectl_context}.\nDo you want to proceed? [y/N]")
+end
 
 Provision.new(options, defaults_staging, defaults_production, tag).call
