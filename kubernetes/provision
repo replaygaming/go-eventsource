@@ -70,7 +70,7 @@ class Provision
 
   def call
     ensure_secret
-    ensure_pdb
+    ensure_pdb if environment == 'production'
     ensure_deployment
     ensure_service
     if @options[:dry_run]
