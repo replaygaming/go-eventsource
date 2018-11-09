@@ -50,7 +50,11 @@ parser = OptionParser.new do |opts|
     options[:metrics_provider] = nil
   end
 
-  opts.on("-n", "--dry-run", "Don't actually change anything, just print out generated deployment/service") do
+  opts.on("-s", "--skip-context-check", "Do not check kubectl context. This is intended to be used only by scripts.") do
+    options[:skip_context_check] = true
+  end
+
+  opts.on("-d", "--dry-run", "Don't actually change anything, just print out generated deployment/service") do
     options[:dry_run] = true
   end
 end
@@ -221,5 +225,10 @@ tag = ARGV[0]
 abort(parser.help) if tag.nil? || tag == ""
 
 abort("Production resources must be provisioned on the 'default' namespace.") if options[:environment] == 'production' && options[:namespace] != 'default'
+
+if !options[:skip_context_check]
+  kubectl_context = %x(kubectl config current-context).chomp
+  abort('Okay, bye!') unless HighLine.new.agree("You are going to run this command for the environment '#{options[:environment]}' and namespace '#{options[:namespace]}'.\nYour current kubectl context is: #{kubectl_context}.\nDo you want to proceed? [y/N]")
+end
 
 Provision.new(options, defaults_staging, defaults_production, tag).call
