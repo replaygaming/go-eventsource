@@ -1,6 +1,6 @@
 #!/bin/bash
 
-: ${PUBSUB_EMULATOR_HOST:=pubsub_emulator:8642}
+: ${PUBSUB_EMULATOR_HOST:=pubsub_emulator:5388}
 
 export PUBSUB_EMULATOR_HOST
 

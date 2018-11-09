@@ -26,7 +26,7 @@ eventsource:
     path: integration_test
     dockerfile_path: Dockerfile
   environment:
-    PUBSUB_EMULATOR_HOST: emulator:8642
+    PUBSUB_EMULATOR_HOST: emulator:8538
   links:
     - emulator
 
@@ -38,7 +38,7 @@ eventsource_integration_tests:
     image: eventsource_integration_tests
     dockerfile_path: integration_test/Dockerfile.test_runner
   environment:
-    PUBSUB_EMULATOR_HOST: emulator:8642
+    PUBSUB_EMULATOR_HOST: emulator:8538
   links:
     - emulator
     - eventsource
