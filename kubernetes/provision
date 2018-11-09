@@ -23,18 +23,18 @@ defaults_production = {
 
 options = {
   environment: "staging",
-  metrics_provider: "log",
   namespace: "default",
+  metrics_provider: "stackdriver"
 }
 
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: provision [options] TAG"
 
-  opts.on("-e [environment]", "--environment [environment]", String, "Environment to provision. Defaults to 'staging'") do |env|
+  opts.on("-e [environment]", "--environment [environment]", String, "Environment to provision. Defaults to '#{options[:environment]}'") do |env|
     options[:environment] = env
   end
 
-  opts.on("-m [metrics_provider]", "--metrics-provider [metrics_provider]", String, "Metrics provider to use. Defaults to 'log'") do |metrics|
+  opts.on("-m [metrics_provider]", "--metrics-provider [metrics_provider]", String, "Metrics provider to use. Defaults to '#{options[:metrics_provider]}'") do |metrics|
     options[:metrics_provider] = metrics
   end
 
@@ -42,11 +42,15 @@ parser = OptionParser.new do |opts|
     options[:namespace] = namespace
   end
 
+  opts.on("--metrics-topic [metrics_topic]", String, "Metrics topic name to use. Defaults to sane defaults depending on environment") do |metrics_topic|
+    options[:metrics_topic] = metrics_topic
+  end
+
   opts.on("-t [topic_name]", "--topic_name [topic_name]", String, "Topic name to use. Defaults to sane defaults depending on environment") do |topic_name|
     options[:topic_name] = topic_name
   end
 
-  opts.on("--no-metrics", "Metrics provider to use. Defaults to 'log'") do
+  opts.on("--no-metrics", "Disable metrics provider. Defaults to '#{options[:metrics_provider]}'") do
     options[:metrics_provider] = nil
   end
 
@@ -143,6 +147,21 @@ class Provision
     @options[:metrics_provider]
   end
 
+  def metrics_prefix
+    case environment
+    when "staging"
+      if namespace == 'default'
+        "staging"
+      else
+        "#{namespace}"
+      end
+    when "production"
+      "production"
+    else
+      abort("Don't know what metrics prefix to use for this environment.")
+    end
+  end
+
   def tag
     @tag
   end
@@ -216,6 +235,23 @@ class Provision
       "eventsource"
     else
       abort("Don't know what topic name to use for this environment. Please provide one. See --help for more information")
+    end
+  end
+
+  def metrics_topic
+    return @options[:metrics_topic] if @options[:metrics_topic]
+
+    case environment
+    when "staging"
+      if namespace == 'default'
+        "metrics-staging"
+      else
+        "metrics-#{namespace}"
+      end
+    when "production"
+      "metrics"
+    else
+      abort("Don't know what metric topics to use for this environment. Please provide one. See --help for more information")
     end
   end
 end

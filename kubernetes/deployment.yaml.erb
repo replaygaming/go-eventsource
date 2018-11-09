@@ -23,6 +23,8 @@ spec:
         env:
         - name: ES_TOPIC
           value: <%= topic_name %>
+        - name: METRICS_TOPIC
+          value: <%= metrics_topic %>
         <% if environment == "production" %>
         - name: ES_COMPRESSION
           value: "true"
@@ -43,7 +45,7 @@ spec:
         - name: ES_METRICS_PROVIDER
           value: "<%= metrics_provider %>"
         - name: ES_METRICS_PREFIX
-          value: <%= environment %>
+          value: "<%= metrics_prefix %>"
         <% end %>
         - name: PUBSUB_KEYFILE
           value: /etc/pubsub/keyfile.json
