@@ -17,6 +17,18 @@ spec:
         component: eventsource
         environment: <%= environment %>
     spec:
+<% if affinity_label_key != "" and affinity_label_value != "" %>
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: <%= affinity_label_key %>
+                operator: In
+                values:
+                - <%= affinity_label_value %>
+<% end %>
       containers:
       - name: eventsource
         image: us.gcr.io/replay-gaming/go-eventsource:<%= tag %>
