@@ -10,7 +10,9 @@ defaults_staging = {
   cpu_request: "100m",
   cpu_limit: "100m",
   memory_request: "16Mi",
-  memory_limit: "32Mi"
+  memory_limit: "32Mi",
+  affinity_label_key: "soft-dedicated",
+  affinity_label_value: "default-namespace",
 }
 
 defaults_production = {
@@ -24,7 +26,8 @@ defaults_production = {
 options = {
   environment: "staging",
   namespace: "default",
-  metrics_provider: "stackdriver"
+  metrics_provider: "stackdriver",
+  no_node_affinity: false,
 }
 
 parser = OptionParser.new do |opts|
@@ -56,6 +59,10 @@ parser = OptionParser.new do |opts|
 
   opts.on("-s", "--skip-context-check", "Do not check kubectl context. This is intended to be used only by scripts.") do
     options[:skip_context_check] = true
+  end
+
+  opts.on("--no-node-affinity", "Do not set node affinity. Enabled by default for non-production pods running on the default namespace.") do
+    options[:no_node_affinity] = true
   end
 
   opts.on("-d", "--dry-run", "Don't actually change anything, just print out generated deployment/service") do
@@ -141,6 +148,22 @@ class Provision
 
   def namespace
     @options[:namespace]
+  end
+
+  def no_node_affinity
+    @options[:no_node_affinity]
+  end
+
+  def affinity_label_key
+    if !no_node_affinity && namespace == 'default'
+      @defaults_staging[:affinity_label_key]
+    end
+  end
+
+  def affinity_label_value
+    if !no_node_affinity && namespace == 'default'
+      @defaults_staging[:affinity_label_value]
+    end
   end
 
   def metrics_provider
@@ -258,7 +281,7 @@ end
 
 tag = ARGV[0]
 
-abort(parser.help) if tag.nil? || tag == ""
+abort("Please set the docker image tag to deploy.\n#{parser.help}") if tag.nil? || tag == ""
 
 abort("Production resources must be provisioned on the 'default' namespace.") if options[:environment] == 'production' && options[:namespace] != 'default'
 
