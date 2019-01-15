@@ -155,15 +155,15 @@ class Provision
   end
 
   def affinity_label_key
-    if !no_node_affinity && namespace == 'default'
-      @defaults_staging[:affinity_label_key]
-    end
+    return if no_node_affinity || namespace != 'default'
+
+    @defaults_staging[:affinity_label_key]
   end
 
   def affinity_label_value
-    if !no_node_affinity && namespace == 'default'
-      @defaults_staging[:affinity_label_value]
-    end
+    return if no_node_affinity || namespace != 'default'
+
+    @defaults_staging[:affinity_label_value]
   end
 
   def metrics_provider

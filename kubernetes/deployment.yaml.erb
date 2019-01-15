@@ -17,7 +17,7 @@ spec:
         component: eventsource
         environment: <%= environment %>
     spec:
-<% if affinity_label_key != "" and affinity_label_value != "" %>
+<% if affinity_label_key && affinity_label_value %>
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -27,7 +27,7 @@ spec:
               - key: <%= affinity_label_key %>
                 operator: In
                 values:
-                - <%= affinity_label_value %>
+                  - <%= affinity_label_value %>
 <% end %>
       containers:
       - name: eventsource
