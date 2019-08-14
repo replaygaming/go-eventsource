@@ -283,8 +283,6 @@ tag = ARGV[0]
 
 abort("Please set the docker image tag to deploy.\n#{parser.help}") if tag.nil? || tag == ""
 
-abort("Production resources must be provisioned on the 'default' namespace.") if options[:environment] == 'production' && options[:namespace] != 'default'
-
 if !options[:skip_context_check]
   kubectl_context = %x(kubectl config current-context).chomp
   abort('Okay, bye!') unless HighLine.new.agree("You are going to run this command for the environment '#{options[:environment]}' and namespace '#{options[:namespace]}'.\nYour current kubectl context is: #{kubectl_context}.\nDo you want to proceed? [y/N]")
