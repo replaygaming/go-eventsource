@@ -45,6 +45,10 @@ parser = OptionParser.new do |opts|
     options[:namespace] = namespace
   end
 
+  opts.on('--replicas [count]', Integer, 'Amount of pod replicas to deploy.') do |replicas|
+    options[:replicas] = replicas
+  end
+
   opts.on("--metrics-topic [metrics_topic]", String, "Metrics topic name to use. Defaults to sane defaults depending on environment") do |metrics_topic|
     options[:metrics_topic] = metrics_topic
   end
@@ -190,6 +194,8 @@ class Provision
   end
 
   def replicas
+    return @options[:replicas] if !@options[:replicas].nil?
+
     case environment
     when "staging"
       @defaults_staging[:replicas]
