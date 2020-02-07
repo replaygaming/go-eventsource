@@ -1,0 +1,35 @@
+# Default values for go-eventsource.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 6
+environment: production
+
+affinity:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 64Mi
+  limits:
+    cpu: 300m
+    memory: 128Mi
+
+environment_variables:
+- name: METRICS_TOPIC
+  value: "metrics"
+- name: ES_TOPIC
+  value: "eventsource"
+- name: ES_COMPRESSION
+  value: "true"
+# it looks like we do not use stackdriver metrics any more. Do we really need to keep it?
+- name: ES_METRICS
+  value: "true"
+- name: ES_METRICS_PROVIDER
+  value: "stackdriver"
+- name: ES_METRICS_PREFIX
+  value: "production"
+
+pdb:
+  enabled: true

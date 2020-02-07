@@ -1,5 +1,5 @@
 .DS_Store
-go-eventsource
+/go-eventsource
 amqp_consumer
 bin
 tmp
