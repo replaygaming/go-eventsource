@@ -1,0 +1,46 @@
+# Default values for go-eventsource.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+fullnameOverride: "go-eventsource"
+replicaCount: 1
+environment: staging
+
+image:
+  name: us.gcr.io/replay-gaming/go-eventsource
+  tag:
+  pullPolicy: Always
+
+affinity:
+  enabled: true
+  type: soft
+  labelKey: soft-dedicated
+  labelValue: default-namespace
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi
+
+environment_variables:
+- name: METRICS_TOPIC
+  value: '{{ (eq .Release.Namespace "default") | ternary "metrics-staging" (list "metrics" .Release.Namespace | join "-") }}'
+- name: ES_TOPIC
+  value: '{{ (eq .Release.Namespace "default") | ternary "eventsource-staging" (list "eventsource" .Release.Namespace | join "-") }}'
+# it looks like we do not use stackdriver metrics any more. Do we really need to keep it?
+- name: ES_METRICS
+  value: "true"
+- name: ES_METRICS_PROVIDER
+  value: "stackdriver"
+- name: ES_METRICS_PREFIX
+  value: '{{ (eq .Release.Namespace "default") | ternary "staging" .Release.Namespace }}'
+
+service:
+  type: NodePort
+  port: 80
+
+pdb:
+  enabled: false
