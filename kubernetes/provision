@@ -13,6 +13,7 @@ defaults_staging = {
   memory_limit: "32Mi",
   affinity_label_key: "soft-dedicated",
   affinity_label_value: "default-namespace",
+  backend_timeout: "1800",
 }
 
 defaults_production = {
@@ -20,7 +21,8 @@ defaults_production = {
   cpu_request: "200m",
   cpu_limit: "300m",
   memory_request: "64Mi",
-  memory_limit: "128Mi"
+  memory_limit: "128Mi",
+  backend_timeout: "1200",
 }
 
 options = {
@@ -87,6 +89,7 @@ class Provision
     ensure_secret
     ensure_pdb if environment == 'production'
     ensure_deployment
+    ensure_backendconfig
     ensure_service
     if @options[:dry_run]
       puts
@@ -112,6 +115,10 @@ class Provision
 
   def ensure_service
     apply_file "service", "yaml.erb"
+  end
+
+  def ensure_backendconfig
+    apply_file "backendconfig", "yaml.erb"
   end
 
   def apply_file(filename, extension)
@@ -245,6 +252,17 @@ class Provision
       @defaults_staging[:memory_limit]
     when "production"
       @defaults_production[:memory_limit]
+    else
+      abort("Invalid environment '#{environment}'.")
+    end
+  end
+
+  def backend_timeout
+    case environment
+    when "staging"
+      @defaults_staging[:backend_timeout]
+    when "production"
+      @defaults_production[:backend_timeout]
     else
       abort("Invalid environment '#{environment}'.")
     end

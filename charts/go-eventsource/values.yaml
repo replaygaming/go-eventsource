@@ -5,6 +5,7 @@
 fullnameOverride: "go-eventsource"
 replicaCount: 1
 environment: staging
+provider: gke
 
 image:
   name: us.gcr.io/replay-gaming/go-eventsource
@@ -44,3 +45,6 @@ service:
 
 pdb:
   enabled: false
+
+backendConfig:
+  timeout: 1800

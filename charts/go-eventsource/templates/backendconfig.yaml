@@ -1,0 +1,8 @@
+{{- if eq .Values.provider "gke" }}
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: eventsource
+spec:
+  timeoutSec: {{ .Values.backendConfig.timeout }}
+{{- end -}}
