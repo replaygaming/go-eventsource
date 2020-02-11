@@ -1,9 +1,0 @@
-FROM us.gcr.io/replay-gaming/alpine:3.7
-
-RUN apk add -U --no-cache curl netcat-openbsd bash
-
-ADD ./integration_test/scripts/curl_client.sh /curl_client.sh
-ADD ./integration_test/scripts/run_tests /run_tests
-ADD ./tmp/client /client
-
-CMD /run_tests
