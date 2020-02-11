@@ -1,0 +1,60 @@
+---
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    timeout: 600s
+    id: pubsub-emulator
+    args:
+      - "run"
+      - "-d"
+      - "--network=cloudbuild"
+      - "--name=pubsub-emulator"
+      - "google/cloud-sdk:279.0.0"
+      - "gcloud"
+      - "beta"
+      - "emulators"
+      - "pubsub"
+      - "start"
+      - "--host-port=0.0.0.0:8538"
+
+  - name: "golang:1.13"
+    args: ['go', 'test']
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: build
+    args:
+      - "build"
+      - "--tag"
+      - "us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:${COMMIT_SHA}"
+      - "."
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: tag-latest
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        ([[ "$BRANCH_NAME" == "master" ]] && \
+        docker tag us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:$COMMIT_SHA us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:latest && \
+        docker push us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:latest) || exit 0
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: tag-version
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        ([[ "$TAG_NAME" =~ '^(v[0-9]+\.[0-9]+\.[0-9]+)$' ]] && \
+        docker tag us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:$COMMIT_SHA us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:$TAG_NAME && \
+        docker push us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:$TAG_NAME) || exit 0
+
+substitutions:
+  _PROJECT_NAME: go-eventsource
+  _ENVIRONMENT: staging
+  _CLUSTER: staging
+options:
+  substitution_option: "MUST_MATCH"
+  log_streaming_option: "STREAM_ON"
+timeout: 600s
+tags: ["${_PROJECT_NAME}", "ci"]
+images:
+  - "us.gcr.io/$PROJECT_ID/${_PROJECT_NAME}:$COMMIT_SHA"
