@@ -166,13 +166,13 @@ class Provision
   end
 
   def affinity_label_key
-    return if no_node_affinity || namespace != 'default'
+    return if no_node_affinity || namespace != 'default' || environment == 'production'
 
     @defaults_staging[:affinity_label_key]
   end
 
   def affinity_label_value
-    return if no_node_affinity || namespace != 'default'
+    return if no_node_affinity || namespace != 'default' || environment == 'production'
 
     @defaults_staging[:affinity_label_value]
   end
