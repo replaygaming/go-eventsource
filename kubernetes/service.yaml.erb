@@ -4,6 +4,8 @@ metadata:
   name: eventsource
   labels:
     environment: <%= environment %>
+  annotations:
+    beta.cloud.google.com/backend-config: '{"ports": {"80":"eventsource"}}'
 spec:
   type: NodePort
   selector:

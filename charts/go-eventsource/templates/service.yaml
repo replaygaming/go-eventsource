@@ -4,6 +4,10 @@ metadata:
   name: eventsource
   labels:
     environment: {{ .Values.environment }}
+{{- if eq .Values.provider "gke" }}
+  annotations:
+    beta.cloud.google.com/backend-config: '{"ports": {"{{ .Values.service.port }}":"eventsource"}}'
+{{- end }}
 spec:
   type: {{ .Values.service.type }}
   selector:

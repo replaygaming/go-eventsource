@@ -1,4 +1,5 @@
 environment: development
+provider: local
 
 image:
   pullPolicy: IfNotPresent

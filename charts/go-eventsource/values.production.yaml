@@ -33,3 +33,6 @@ environment_variables:
 
 pdb:
   enabled: true
+
+backendConfig:
+  timeout: 1200
