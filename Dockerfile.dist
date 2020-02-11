@@ -1,7 +1,0 @@
-FROM us.gcr.io/replay-gaming/alpine:3.7
-
-RUN apk add -U --no-cache ca-certificates
-
-ADD ./tmp/go-eventsource /go-eventsource
-
-CMD ["/go-eventsource"]

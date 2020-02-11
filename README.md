@@ -4,32 +4,36 @@ Server-sent stream to update game info in real-time
 
 ## Build docker image
 
-To build the `go-eventsource` docker image you should use [jet][1] by running
-```
-jet steps
+```bash
+docker build -t us.gcr.io/replay-gaming/go-eventsource .
 ```
 
 This should generate an image tagged `us.gcr.io/replay-gaming/go-eventsource:latest`
 in your local docker engine.
 
 Alternatively you can download the image from our [private docker
-registry][2] manually too.
+registry][1] manually too.
 
 ## Build locally
 
 To build the binary outside of docker, you can use the standard commands from
 golang:
 
-```
+```bash
 go build
 # generates ./go-eventsource
 ./go-eventsource -h
 ```
 
+## CI
+
+You always can monitor CI status in [cloudbuild]
+
 ## Run
 
 To run the binary, you can check all the options available by running
-```
+
+```bash
 go-eventsource -h
 ```
 
@@ -39,14 +43,17 @@ to `3333`
 
 As always for more details on the options, read the source code :)
 
-## Kubernetes
+## Dependencies
 
-To deploy to kubernetes, use the `provision` script under the `kubernetes` folder.
+For tests you will need pubsub-emulator. This can be set with environment
+variable: `PUBSUB_EMULATOR_HOST`, default value is `pubsub-emulator:8538`
 
-The help should guide you on how to use it, and it assumes sane defaults for staging.
+## Provision
 
-```
-./kubernetes/provision -h
+Use Helm for provision, example:
+
+```bash
+helm install charts/go-eventsource
 ```
 
 ## Useful links
@@ -54,5 +61,5 @@ The help should guide you on how to use it, and it assumes sane defaults for sta
 * https://golang.org/doc/install
 * https://golang.org/doc/code.html
 
-[1]: https://codeship.com/documentation/docker/installation/
-[2]: https://replaygaming.atlassian.net/wiki/display/DT/Private+Docker+Registry
+[1]: https://replaygaming.atlassian.net/wiki/display/DT/Private+Docker+Registry
+[cloudbuild]: https://console.cloud.google.com/cloud-build/builds?project=replay-gaming

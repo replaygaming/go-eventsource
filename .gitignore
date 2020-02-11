@@ -1,12 +1,5 @@
 .DS_Store
 /go-eventsource
-amqp_consumer
 bin
 tmp
-secret.yaml
-
-_testmain.go
-
 /**/google_deployment.env
-codeship.aes
-/vendor
