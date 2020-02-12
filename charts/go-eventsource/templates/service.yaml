@@ -15,7 +15,7 @@ spec:
     environment: {{ .Values.environment }}
   ports:
     - name: sse
-      port: {{ .Values.service.type }}
-      targetPort: {{ .Values.service.type }}
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
       protocol: TCP
   sessionAffinity: None
