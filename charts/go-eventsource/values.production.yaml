@@ -30,6 +30,8 @@ environment_variables:
   value: "stackdriver"
 - name: ES_METRICS_PREFIX
   value: "production"
+- name: PUBSUB_KEYFILE
+  value: "/etc/pubsub/keyfile.json"
 
 pdb:
   enabled: true

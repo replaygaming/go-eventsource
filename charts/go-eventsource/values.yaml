@@ -38,6 +38,8 @@ environment_variables:
   value: "stackdriver"
 - name: ES_METRICS_PREFIX
   value: '{{ (eq .Release.Namespace "default") | ternary "staging" .Release.Namespace }}'
+- name: PUBSUB_KEYFILE
+  value: "/etc/pubsub/keyfile.json"
 
 service:
   type: NodePort
