@@ -6,3 +6,15 @@ image:
 
 affinity:
   enabled: false
+
+environment_variables:
+- name: ES_METRICS_PROVIDER
+  value: "log"
+- name: ES_METRICS
+  value: "true"
+- name: ES_METRICS_PREFIX
+  value: "development"
+- name: PUBSUB_EMULATOR_HOST
+  value: "pubsub-emulator:8538"
+- name: PUBSUB_PROJECT_ID
+  value: "emulator-project-id"

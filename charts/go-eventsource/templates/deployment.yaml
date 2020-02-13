@@ -22,27 +22,6 @@ spec:
       - name: eventsource
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         image: {{ include "go-eventsource.image" . | quote }}
-        env:
-        - name: PUBSUB_PROJECT_ID
-          valueFrom:
-            secretKeyRef:
-              name: pubsub
-              key: project-id
-        - name: ES_SUBSCRIPTION
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.name
-        - name: PUBSUB_KEYFILE
-          value: /etc/pubsub/keyfile.json
-{{- range $pair := .Values.environment_variables }}
-        - name: {{ $pair.name }}
-          value: {{ tpl $pair.value $ | quote }}
-{{- end }}
-        volumeMounts:
-          - name: pubsub-secret
-            readOnly: true
-            mountPath: /etc/pubsub
         ports:
         - name: sse
           containerPort: 80
@@ -53,7 +32,28 @@ spec:
           limits:
             cpu: {{ .Values.resources.limits.cpu | quote }}
             memory: {{ .Values.resources.limits.memory | quote }}
+        env:
+{{- range $pair := .Values.environment_variables }}
+        - name: {{ $pair.name }}
+          value: {{ tpl $pair.value $ | quote }}
+{{- end }}
+        - name: ES_SUBSCRIPTION
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+{{- if eq .Values.provider "gke" }}
+        - name: PUBSUB_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: pubsub
+              key: project-id
+        volumeMounts:
+          - name: pubsub-secret
+            readOnly: true
+            mountPath: /etc/pubsub
       volumes:
         - name: pubsub-secret
           secret:
             secretName: pubsub
+{{- end }}
