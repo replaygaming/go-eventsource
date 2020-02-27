@@ -50,10 +50,10 @@ variable: `PUBSUB_EMULATOR_HOST`, default value is `pubsub-emulator:8538`
 
 ## Provision
 
-Use Helm for provision, example:
+Use Helm for provision, production example:
 
 ```bash
-helm install charts/go-eventsource
+helm upgrade --install -f charts/go-eventsource/values.production.yaml eventsource .
 ```
 
 ## Useful links
