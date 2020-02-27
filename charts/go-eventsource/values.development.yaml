@@ -1,5 +1,6 @@
 environment: development
 provider: local
+globalNamePrefix: ""
 
 image:
   pullPolicy: IfNotPresent

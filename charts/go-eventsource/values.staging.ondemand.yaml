@@ -1,3 +1,5 @@
+globalNamePrefix: ""
+
 image:
   pullPolicy: IfNotPresent
 

@@ -6,7 +6,7 @@ fullnameOverride: "eventsource"
 replicaCount: 1
 environment: staging
 provider: gke
-globalNamePrefix: ""
+globalNamePrefix: "rp"
 
 image:
   name: us.gcr.io/replay-gaming/go-eventsource
