@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eventsource
+  name:  {{ include "go-eventsource.fullname" . }}
   labels:
-    component: eventsource
+    component:  {{ include "go-eventsource.fullname" . }}
     environment: {{ .Values.environment }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      component: eventsource
+      component:  {{ include "go-eventsource.fullname" . }}
       environment: {{ .Values.environment }}
   template:
     metadata:
       labels:
-        component: eventsource
+        component:  {{ include "go-eventsource.fullname" . }}
         environment: {{ .Values.environment }}
     spec:
 {{ include "go-eventsource.affinity" . | indent 6 }}
       containers:
-      - name: eventsource
+      - name: main
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         image: {{ include "go-eventsource.image" . | quote }}
         ports:

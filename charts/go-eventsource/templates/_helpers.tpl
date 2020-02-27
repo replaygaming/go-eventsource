@@ -13,13 +13,13 @@ If release name contains chart name it will be used as a full name.
 */}}
 {{- define "go-eventsource.fullname" -}}
 {{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- list .Values.globalNamePrefix .Values.fullnameOverride | join "-" | trimAll "-" | trunc 63 }}
 {{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- list .Values.globalNamePrefix .Release.Name | join "-" | trunc 63 | trimAll "-" -}}
 {{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s-%s" .Values.globalNamePrefix .Release.Name $name | trunc 63 | trimAll "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
