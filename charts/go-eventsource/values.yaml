@@ -10,7 +10,7 @@ globalNamePrefix: "rp"
 
 image:
   name: us.gcr.io/replay-gaming/go-eventsource
-  tag:
+  tag: v1.3.3
   pullPolicy: Always
 
 affinity:
