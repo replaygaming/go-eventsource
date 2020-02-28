@@ -1,7 +1,9 @@
 environment: development
 provider: local
+globalNamePrefix: ""
 
 image:
+  tag:
   pullPolicy: IfNotPresent
 
 affinity:

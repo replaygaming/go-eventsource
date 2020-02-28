@@ -1,4 +1,7 @@
+globalNamePrefix: ""
+
 image:
+  tag:
   pullPolicy: IfNotPresent
 
 affinity:

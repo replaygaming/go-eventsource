@@ -2,14 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-fullnameOverride: "go-eventsource"
+fullnameOverride: "eventsource"
 replicaCount: 1
 environment: staging
 provider: gke
+globalNamePrefix: "rp"
 
 image:
   name: us.gcr.io/replay-gaming/go-eventsource
-  tag:
+  tag: v1.3.3
   pullPolicy: Always
 
 affinity:

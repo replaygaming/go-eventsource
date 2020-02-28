@@ -2,10 +2,10 @@
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
-  name: eventsource
+  name:  {{ include "go-eventsource.fullname" . }}
 spec:
   selector:
     matchLabels:
-      component: eventsource
+      component:  {{ include "go-eventsource.fullname" . }}
   minAvailable: 50%
 {{- end -}}
