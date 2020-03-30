@@ -46,15 +46,9 @@ func sendMessageFromNewClient(event string, contents string) {
 		log.Fatalf("Could not parse message: %v", err)
 	}
 
-	msgIDs, err := topic.Publish(context.Background(), &pubsub.Message{
+	topic.Publish(context.Background(), &pubsub.Message{
 		Data: payload,
 	})
-	if err != nil {
-		fmt.Printf("Error publishing message %v\n", payload)
-	}
-	for _, id := range msgIDs {
-		fmt.Printf("Published a message; msg ID: %v\nPayload: %v\n", id, payload)
-	}
 }
 
 func makeRequest(url string, ch chan<- string) {
@@ -63,6 +57,7 @@ func makeRequest(url string, ch chan<- string) {
 	res, err := http.Get(url)
 	if err != nil {
 		close(ch)
+		fmt.Errorf("Cannot communicate with pubsub")
 		os.Exit(1)
 	}
 	defer res.Body.Close()
@@ -73,7 +68,7 @@ func makeRequest(url string, ch chan<- string) {
 	}
 }
 
-func TestMain(m *testing.M) {
+func TestMain(m *testing.T) {
 	go main()
 
 	time.Sleep(1 * time.Second)
@@ -82,11 +77,10 @@ func TestMain(m *testing.M) {
 	go makeRequest("http://localhost/subscribe?channels=*,200", ch)
 	go makeRequest("http://localhost/subscribe?channels=*,300", ch)
 
-	go func() {
+	go func(m *testing.T) {
 		time.Sleep(10 * time.Second)
-		fmt.Fprintf(os.Stderr, "Timeout: Did not get all messages!")
-		os.Exit(1)
-	}()
+		m.Errorf("Timeout: Did not get all messages!")
+	}(m)
 
 	for i := 0; i < 10; i++ {
 		go sendMessageFromNewClient("test", "msg"+strconv.Itoa(i))
