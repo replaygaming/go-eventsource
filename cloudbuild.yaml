@@ -16,7 +16,7 @@ steps:
       - "start"
       - "--host-port=0.0.0.0:8538"
 
-  - name: "golang:1.13"
+  - name: "golang:1.14"
     args: ['go', 'test']
 
   - name: "gcr.io/cloud-builders/docker"
