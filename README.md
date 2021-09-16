@@ -1,3 +1,7 @@
+# RIP
+
+This code was archived in favor https://github.com/replaygaming/sse
+
 # go-eventsource
 
 Server-sent stream to update game info in real-time
